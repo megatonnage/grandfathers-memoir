@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+    .layer-original {
+        @apply font-serif text-[#3d3d3d] bg-[#fdfcfa];
+    }
+    .layer-bridge {
+        @apply font-sans text-[#4a4a4a] bg-white;
+    }
+    .layer-witness {
+        @apply font-crimson text-[#4338ca] bg-[#f8f7ff];
+    }
+    .layer-chorus {
+        @apply font-sans text-[#166534] bg-[#f0fdf4];
+    }
+    .layer-futures {
+        @apply font-mono text-[#7c3aed] bg-[#0a0a0f];
+    }
+}
