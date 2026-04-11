@@ -1,0 +1,13 @@
+{
+  "chapter": "01-early-years",
+  "layer": 5,
+  "voices": [
+    {
+      "id": "future-001",
+      "author": "[Descendant Name]",
+      "date": "[Future Era]",
+      "context": "[Where/when they're writing from]",
+      "text": "[Their response to all who came before]"
+    }
+  ]
+}

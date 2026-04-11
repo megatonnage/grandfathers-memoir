@@ -1,0 +1,72 @@
+[
+  {
+    "id": "01-early-years",
+    "title": "Early Years",
+    "subtitle": "Childhood in the Village",
+    "order": 1,
+    "dateRange": "1930s–1940s",
+    "hasLayers": {
+      "original": true,
+      "translation": true,
+      "witness": true,
+      "chorus": false,
+      "futures": false
+    }
+  },
+  {
+    "id": "02-war-years",
+    "title": "War Years",
+    "subtitle": "Conflict and Displacement",
+    "order": 2,
+    "dateRange": "1940s–1950s",
+    "hasLayers": {
+      "original": false,
+      "translation": false,
+      "witness": false,
+      "chorus": false,
+      "futures": false
+    }
+  },
+  {
+    "id": "03-exile",
+    "title": "Exile",
+    "subtitle": "Leaving Home",
+    "order": 3,
+    "dateRange": "1950s",
+    "hasLayers": {
+      "original": false,
+      "translation": false,
+      "witness": false,
+      "chorus": false,
+      "futures": false
+    }
+  },
+  {
+    "id": "04-america",
+    "title": "America",
+    "subtitle": "Building a New Life",
+    "order": 4,
+    "dateRange": "1960s–1970s",
+    "hasLayers": {
+      "original": false,
+      "translation": false,
+      "witness": false,
+      "chorus": false,
+      "futures": false
+    }
+  },
+  {
+    "id": "05-clan",
+    "title": "The Clan",
+    "subtitle": "Family and Legacy",
+    "order": 5,
+    "dateRange": "1980s–2000s",
+    "hasLayers": {
+      "original": false,
+      "translation": false,
+      "witness": false,
+      "chorus": false,
+      "futures": false
+    }
+  }
+]
