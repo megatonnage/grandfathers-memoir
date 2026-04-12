@@ -8,6 +8,12 @@ Create a multi-layered digital archive of my grandfather's memoirs—a temporal 
 ### Deep Motivation
 "Going back in time and being with him as he fights to shape his life." This is witnessing. This is presence across generations.
 
+**The Man:** A clan built through sheer will and belief. His small pleasures—Pall Malls, jasmine tea, Kung Fu noodles, fishing—belied enormous determination. "Teacher" to his children, "Grandfather" to his grandchildren. His true love was them: living proof of the vision he dreamed as a solitary young man.
+
+**The Undocumented Strength:** His wife, your grandmother. She did not write, so her presence lives in the memories of others. Loving, comforting, gentle humor, transparent emotions—always clearly loving.
+
+**NOT a dead memorial. A living conversation across epochs.**
+
 ### Core Principles
 1. **Layered Truth** — No single interpretation is complete; meaning emerges from the stack
 2. **Family as Collaborators** — The archive grows with each relative's contribution
@@ -24,19 +30,22 @@ Create a multi-layered digital archive of my grandfather's memoirs—a temporal 
 
 ## ARCHITECTURE.md — The Structure
 
-### Five-Layer Model
+### Five-Layer Model (Evolved)
 
-| Layer | Name | Content | Visual Identity |
-|-------|------|---------|-----------------|
-| 1 | Original | Grandfather's Vietnamese text | Serif, warm, historical |
-| 2 | Bridge | Literal Vietnamese→English | Sans-serif, neutral, technical |
-| 3 | Witness | Anh's response/reflection | Italic/script, intimate, personal |
-| 4 | Chorus | Family responses/corrections | Threaded, conversational, social |
-| 5 | Futures | Descendants from far future | Monospace/alien, speculative, cosmic |
+| Layer | Name | Content | Visual Identity | Access |
+|-------|------|---------|-----------------|--------|
+| 1 | **Original** | Grandfather's Vietnamese text | Scholarly serif (Crimson Text), warm paper tones | Public |
+| 2 | **Bridge** | English translation | Clean sans (Inter), readable | Public |
+| 3 | **Chorus** | Family annotations & conversation | Conversational, threaded | Login-gated |
+| 4 | **Futures** | Far-future descendants | Distinct, otherworldly | Public |
+| 5 | **Replicas** | AI replicas of grandfather, ancestor responses | Circular time aesthetic | Public |
+
+**Time is circular:** Responses from distant ancestors AND far-future descendants. Voices from the end of time converse with voices from the beginning.
 
 ### Navigation Model
-- **Book mode:** Sequential chapter reading (prev/next)
-- **Browse mode:** Chapter grid/toc for jumping
+- **Simul-scroll:** Vietnamese (left) + English (right), moving together
+- **Persistent chapters:** Always visible, anchoring the journey
+- **Timeline experience:** Search across ancient past AND far future
 - **Layer controls:** Toggle visibility per layer globally or per-chapter
 
 ### Content Structure
@@ -57,6 +66,9 @@ chapters/
 - **Framework:** Next.js 14 (App Router)
 - **Styling:** Tailwind CSS
 - **Content:** Markdown for prose layers, JSON for threaded layers
+- **Authentication:** NextAuth or similar (for Chorus layer)
+- **AI Integration:** OpenAI API (for Replicas layer)
+- **Photos:** Responsive gallery, various formats
 - **Deployment:** Vercel (or static export)
 
 ---
