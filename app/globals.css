@@ -1,21 +1,111 @@
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --color-primary: #012D1D;
+    --color-primary-container: #1B4332;
+    --color-on-primary: #FFFFFF;
+    
+    --color-surface: #FEF9F0;
+    --color-on-surface: #1D1C16;
+    --color-surface-container: #F2EDE4;
+    --color-surface-container-low: #F8F3EA;
+    --color-surface-container-highest: #E6E2DA;
+    --color-surface-bright: #FCF9F4;
+    
+    --color-tertiary: #500B07;
+    --color-on-tertiary-container: #F48879;
+    
+    --color-outline: #717973;
+    --color-outline-variant: rgba(113, 121, 115, 0.15);
+  }
+  
+  body {
+    @apply bg-surface text-on-surface font-body;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-headline;
+  }
+}
+
 @layer utilities {
-    .layer-original {
-        @apply font-serif text-[#3d3d3d] bg-[#fdfcfa];
-    }
-    .layer-bridge {
-        @apply font-sans text-[#4a4a4a] bg-white;
-    }
-    .layer-witness {
-        @apply font-crimson text-[#4338ca] bg-[#f8f7ff];
-    }
-    .layer-chorus {
-        @apply font-sans text-[#166534] bg-[#f0fdf4];
-    }
-    .layer-futures {
-        @apply font-mono text-[#7c3aed] bg-[#0a0a0f];
-    }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .glass-archival {
+    @apply backdrop-blur-[12px] bg-surface-bright/70;
+  }
+  
+  .moss-gradient {
+    background: linear-gradient(145deg, #012D1D 0%, #1B4332 100%);
+  }
+
+  .text-on-surface {
+    color: var(--color-on-surface);
+  }
+  
+  .bg-surface {
+    background-color: var(--color-surface);
+  }
+
+  .bg-surface-container {
+    background-color: var(--color-surface-container);
+  }
+  
+  .bg-surface-container-low {
+    background-color: var(--color-surface-container-low);
+  }
+  
+  .bg-surface-container-highest {
+    background-color: var(--color-surface-container-highest);
+  }
+
+  .bg-surface-bright {
+    background-color: var(--color-surface-bright);
+  }
+
+  .text-primary {
+    color: var(--color-primary);
+  }
+  
+  .bg-primary {
+    background-color: var(--color-primary);
+  }
+
+  .bg-primary-container {
+    background-color: var(--color-primary-container);
+  }
+
+  .text-on-primary {
+    color: var(--color-on-primary);
+  }
+  
+  .bg-tertiary {
+    background-color: var(--color-tertiary);
+  }
+
+  .text-on-tertiary-container {
+    color: var(--color-on-tertiary-container);
+  }
+
+  .text-outline {
+    color: var(--color-outline);
+  }
+
+  .border-outline-variant {
+    border-color: var(--color-outline-variant);
+  }
+
+  .bg-outline-variant {
+    background-color: var(--color-outline-variant);
+  }
 }

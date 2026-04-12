@@ -1,6 +1,4 @@
 {
-  "/page": "app/page.js",
-  "/admin/page": "app/admin/page.js",
-  "/api/chapters/[chapterId]/content/route": "app/api/chapters/[chapterId]/content/route.js",
-  "/api/chapters/route": "app/api/chapters/route.js"
+  "/_not-found/page": "app/_not-found/page.js",
+  "/page": "app/page.js"
 }
