@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import Header from '../components/Header';
 import BilingualReader from '../components/BilingualReader';
 import ChorusSidebar from '../components/ChorusSidebar';
 import TimelineView from '../components/TimelineView';
 import DistantVoices from '../components/DistantVoices';
-import { MOCK_CHAPTERS } from '../constants';
 import { Book, Users, Radio, History, Edit3 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Chapter, Annotation } from '../types';
@@ -17,8 +18,17 @@ export default function Home() {
   const [currentView, setCurrentView] = useState<View>('memoir');
   const [isChorusOpen, setIsChorusOpen] = useState(false);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
-  const [chapters, setChapters] = useState<Chapter[]>(MOCK_CHAPTERS);
+  const [chapters, setChapters] = useState<Chapter[]>([]);
   const [activeTargetId, setActiveTargetId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const q = query(collection(db, 'chapters'), orderBy('order', 'asc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const loadedChapters = snapshot.docs.map(doc => doc.data() as Chapter);
+      setChapters(loadedChapters);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const currentChapter = chapters[currentChapterIndex];
 
@@ -118,7 +128,13 @@ export default function Home() {
       <Header />
 
       <main className="flex-1 relative overflow-hidden">
-        {currentView === 'memoir' && (
+        {!currentChapter ? (
+          <div className="w-full h-full flex flex-col items-center justify-center pt-32 text-on-surface-variant animate-pulse">
+            <p className="font-title text-xl">Dusting off the archive...</p>
+          </div>
+        ) : (
+          <>
+            {currentView === 'memoir' && (
           <BilingualReader 
             chapter={currentChapter} 
             onAnnotate={handleAnnotate}
@@ -161,6 +177,8 @@ export default function Home() {
           onAddReply={handleAddReply}
           onLinkBack={handleLinkBack}
         />
+          </>
+        )}
       </main>
 
       {/* Bottom Navigation */}
