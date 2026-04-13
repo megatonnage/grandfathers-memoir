@@ -85,7 +85,7 @@ export default function BilingualReader({ chapter, onAnnotate, activeAnnotationI
                   )}
                 >
                   <div className="prose prose-stone max-w-none font-headline text-xl leading-relaxed text-on-surface/90">
-                    <ReactMarkdown components={markdownComponents}>{p}</ReactMarkdown>
+                    <ReactMarkdown components={markdownComponents}>{p.replace(/\n/g, '  \n')}</ReactMarkdown>
                   </div>
                   <button 
                     onClick={() => onAnnotate(pId)}
@@ -150,7 +150,7 @@ export default function BilingualReader({ chapter, onAnnotate, activeAnnotationI
                   )}
                 >
                   <div className="prose prose-stone max-w-none font-headline text-xl leading-relaxed text-on-surface/70 italic">
-                    <ReactMarkdown components={markdownComponents}>{p}</ReactMarkdown>
+                    <ReactMarkdown components={markdownComponents}>{p.replace(/\n/g, '  \n')}</ReactMarkdown>
                   </div>
                   <button 
                     onClick={() => onAnnotate(pId)}
