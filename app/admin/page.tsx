@@ -18,7 +18,7 @@ export default function AdminDashboard() {
   const [editForm, setEditForm] = useState({ title: '', contentVi: '', contentEn: '' });
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, targetField: 'contentVi' | 'contentEn') => {
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -31,7 +31,7 @@ export default function AdminDashboard() {
       const data = await res.json();
       
       if (data.success) {
-        setEditForm(prev => ({ ...prev, contentEn: prev.contentEn + `\n\n![](${data.downloadURL})\n\n` }));
+        setEditForm(prev => ({ ...prev, [targetField]: prev[targetField] + `\n\n![](${data.downloadURL})\n\n` }));
       } else {
         alert('Upload failed: ' + data.error);
       }
@@ -63,7 +63,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, isTranslation: boolean = false) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -88,7 +88,7 @@ export default function AdminDashboard() {
         const parseResponse = await fetch('/api/admin/parse', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileName: file.name })
+          body: JSON.stringify({ fileName: file.name, isTranslation })
         });
         
         const parseData = await parseResponse.json();
@@ -154,11 +154,22 @@ export default function AdminDashboard() {
 
               <div className="border-2 border-dashed border-outline-variant rounded-xl p-12 flex flex-col items-center justify-center text-center bg-surface-container-low/50 hover:bg-surface-container-low transition-colors">
                 <Upload className="w-10 h-10 text-primary mb-4 opacity-70" />
-                <label className="bg-primary text-on-primary px-6 py-2 rounded-md font-label font-medium cursor-pointer hover:bg-primary-container transition-transform active:scale-95">
-                  {isUploading ? '...' : 'Select File'}
-                  <input type="file" accept=".md,.txt" className="hidden" disabled={isUploading} onChange={handleFileUpload} />
+                <h4 className="font-bold text-on-surface mb-3 font-headline text-lg">Vietnamese Original</h4>
+                <label className="bg-primary text-on-primary px-6 py-2 rounded-md font-label font-medium cursor-pointer hover:scale-105 transition-transform active:scale-95">
+                  {isUploading ? '...' : 'Select Vietnamese .md'}
+                  <input type="file" accept=".md,.txt" className="hidden" disabled={isUploading} onChange={(e) => handleFileUpload(e, false)} />
                 </label>
-                {uploadMessage && <p className="mt-4 text-sm font-label text-tertiary">{uploadMessage}</p>}
+                {uploadMessage && !uploadMessage.includes('mapped translation') && <p className="mt-4 text-sm font-label text-tertiary max-w-[250px] mx-auto">{uploadMessage}</p>}
+              </div>
+
+              <div className="border-2 border-dashed border-outline-variant rounded-xl p-12 flex flex-col items-center justify-center text-center bg-surface-container-low/50 hover:bg-surface-container-low transition-colors mt-6">
+                <Upload className="w-10 h-10 text-primary mb-4 opacity-70" />
+                <h4 className="font-bold text-on-surface mb-3 font-headline text-lg">English Translation Archive</h4>
+                <label className="bg-primary text-on-primary px-6 py-2 rounded-md font-label font-medium cursor-pointer hover:scale-105 transition-transform active:scale-95">
+                  {isUploading ? '...' : 'Select English Translation .md'}
+                  <input type="file" accept=".md,.txt" className="hidden" disabled={isUploading} onChange={(e) => handleFileUpload(e, true)} />
+                </label>
+                {uploadMessage && uploadMessage.includes('mapped translation') && <p className="mt-4 text-sm font-label text-tertiary">{uploadMessage}</p>}
               </div>
             </div>
             
@@ -178,30 +189,37 @@ export default function AdminDashboard() {
                            className="w-full p-2 border border-outline-variant rounded shrink font-headline"
                          />
                          
-                         <label className="text-xs font-bold text-outline uppercase tracking-wider block mt-4">Vietnamese Original</label>
+                         <div className="flex justify-between items-center mt-4">
+                           <label className="text-xs font-bold text-outline uppercase tracking-wider block">Vietnamese Original</label>
+                           <label className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-1 rounded cursor-pointer hover:bg-primary/20 transition-colors flex items-center gap-1 active:scale-95">
+                             <ImageIcon className="w-3 h-3" /> {isUploadingImage ? '...' : 'Insert Photo'}
+                             <input type="file" accept="image/*" className="hidden" disabled={isUploadingImage} onChange={e => handleImageUpload(e, 'contentVi')} />
+                           </label>
+                         </div>
                          <textarea 
                            rows={6}
                            value={editForm.contentVi} 
                            onChange={e => setEditForm({...editForm, contentVi: e.target.value})} 
-                           className="w-full p-3 border border-outline-variant rounded font-body text-sm"
+                           className="w-full p-3 border border-outline-variant rounded font-body text-sm mt-1"
                          />
                          
-                         <label className="text-xs font-bold text-outline uppercase tracking-wider block mt-4">English Translation (Memoir Layer)</label>
+                         <div className="flex justify-between items-center mt-4">
+                           <label className="text-xs font-bold text-outline uppercase tracking-wider block">English Translation (Memoir Layer)</label>
+                           <label className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-1 rounded cursor-pointer hover:bg-primary/20 transition-colors flex items-center gap-1 active:scale-95">
+                             <ImageIcon className="w-3 h-3" /> {isUploadingImage ? '...' : 'Insert Photo'}
+                             <input type="file" accept="image/*" className="hidden" disabled={isUploadingImage} onChange={e => handleImageUpload(e, 'contentEn')} />
+                           </label>
+                         </div>
                          <textarea 
                            rows={6}
                            value={editForm.contentEn} 
                            onChange={e => setEditForm({...editForm, contentEn: e.target.value})} 
-                           className="w-full p-3 border border-outline-variant rounded font-body text-sm"
+                           className="w-full p-3 border border-outline-variant rounded font-body text-sm mt-1"
                            placeholder="Type the English translation here..."
                          />
                          
-                         <div className="flex justify-between items-center pt-2">
-                           <label className="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-md cursor-pointer hover:bg-primary/20 transition-colors flex items-center gap-2">
-                             <ImageIcon className="w-4 h-4" />
-                             {isUploadingImage ? 'Uploading directly to Firebase...' : 'Insert Missing Photo'}
-                             <input type="file" accept="image/*" className="hidden" disabled={isUploadingImage} onChange={handleImageUpload} />
-                           </label>
-                           <div className="flex justify-end gap-2">
+                         <div className="flex flex-row-reverse pt-2">
+                           <div className="flex gap-2">
                              <button onClick={() => setEditingId(null)} className="px-4 py-2 rounded text-outline font-label text-sm hover:bg-surface-variant transition-colors cursor-pointer">Cancel</button>
                              <button onClick={() => handleEditChapter(ch.id)} className="px-4 py-2 rounded bg-primary font-label text-sm text-on-primary flex items-center gap-2 transition-transform hover:scale-105 cursor-pointer">
                                <Save className="w-4 h-4" /> Save Changes
