@@ -10,6 +10,25 @@ interface BilingualReaderProps {
   activeAnnotationId?: string;
 }
 
+const markdownComponents = {
+  img: (props: any) => (
+    <span className="flex flex-col my-8 p-1.5 bg-white shadow-md transform rotate-1 hover:rotate-0 transition-all border border-outline-variant max-w-[85%] mx-auto">
+      <img 
+        {...props} 
+        className="w-full h-auto rounded-sm grayscale-[0.25] sepia-[0.15]"
+        referrerPolicy="no-referrer"
+      />
+      {props.alt && (
+        <span className="p-3 block border-t border-outline-variant/30 mt-1.5 bg-surface-container-low/50">
+          <span className="font-label text-[12px] text-primary/80 italic font-medium text-center block">
+            {props.alt}
+          </span>
+        </span>
+      )}
+    </span>
+  )
+};
+
 export default function BilingualReader({ chapter, onAnnotate, activeAnnotationId }: BilingualReaderProps) {
   const leftRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
@@ -66,7 +85,7 @@ export default function BilingualReader({ chapter, onAnnotate, activeAnnotationI
                   )}
                 >
                   <div className="prose prose-stone max-w-none font-headline text-xl leading-relaxed text-on-surface/90">
-                    <ReactMarkdown>{p}</ReactMarkdown>
+                    <ReactMarkdown components={markdownComponents}>{p}</ReactMarkdown>
                   </div>
                   <button 
                     onClick={() => onAnnotate(pId)}
@@ -131,7 +150,7 @@ export default function BilingualReader({ chapter, onAnnotate, activeAnnotationI
                   )}
                 >
                   <div className="prose prose-stone max-w-none font-headline text-xl leading-relaxed text-on-surface/70 italic">
-                    <ReactMarkdown>{p}</ReactMarkdown>
+                    <ReactMarkdown components={markdownComponents}>{p}</ReactMarkdown>
                   </div>
                   <button 
                     onClick={() => onAnnotate(pId)}

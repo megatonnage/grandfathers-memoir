@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Upload, MessageSquare, Settings, Check, X, FileText, Save } from 'lucide-react';
+import { Upload, MessageSquare, Settings, Check, X, FileText, Save, Image as ImageIcon } from 'lucide-react';
 import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Chapter } from '../../types';
@@ -16,6 +16,32 @@ export default function AdminDashboard() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ title: '', contentVi: '', contentEn: '' });
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setIsUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const res = await fetch('/api/admin/image', { method: 'POST', body: formData });
+      const data = await res.json();
+      
+      if (data.success) {
+        setEditForm(prev => ({ ...prev, contentEn: prev.contentEn + `\n\n![](${data.downloadURL})\n\n` }));
+      } else {
+        alert('Upload failed: ' + data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Upload request failed.');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
 
   useEffect(() => {
     const q = query(collection(db, 'chapters'), orderBy('order', 'asc'));
@@ -169,11 +195,18 @@ export default function AdminDashboard() {
                            placeholder="Type the English translation here..."
                          />
                          
-                         <div className="flex justify-end gap-2 pt-2">
-                           <button onClick={() => setEditingId(null)} className="px-4 py-2 rounded text-outline font-label text-sm hover:bg-surface-variant transition-colors cursor-pointer">Cancel</button>
-                           <button onClick={() => handleEditChapter(ch.id)} className="px-4 py-2 rounded bg-primary font-label text-sm text-on-primary flex items-center gap-2 transition-transform hover:scale-105 cursor-pointer">
-                             <Save className="w-4 h-4" /> Save Changes
-                           </button>
+                         <div className="flex justify-between items-center pt-2">
+                           <label className="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-md cursor-pointer hover:bg-primary/20 transition-colors flex items-center gap-2">
+                             <ImageIcon className="w-4 h-4" />
+                             {isUploadingImage ? 'Uploading directly to Firebase...' : 'Insert Missing Photo'}
+                             <input type="file" accept="image/*" className="hidden" disabled={isUploadingImage} onChange={handleImageUpload} />
+                           </label>
+                           <div className="flex justify-end gap-2">
+                             <button onClick={() => setEditingId(null)} className="px-4 py-2 rounded text-outline font-label text-sm hover:bg-surface-variant transition-colors cursor-pointer">Cancel</button>
+                             <button onClick={() => handleEditChapter(ch.id)} className="px-4 py-2 rounded bg-primary font-label text-sm text-on-primary flex items-center gap-2 transition-transform hover:scale-105 cursor-pointer">
+                               <Save className="w-4 h-4" /> Save Changes
+                             </button>
+                           </div>
                          </div>
                        </div>
                      ) : (
