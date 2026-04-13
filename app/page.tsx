@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import Header from '../components/Header';
 import BilingualReader from '../components/BilingualReader';
@@ -32,12 +32,12 @@ export default function Home() {
 
   const currentChapter = chapters[currentChapterIndex];
 
-  const handleAnnotate = (targetId: string) => {
-    setActiveTargetId(targetId);
+  const handleAnnotate = (targetId?: string | null) => {
+    setActiveTargetId(targetId || null);
     setIsChorusOpen(true);
   };
 
-  const handleAddAnnotation = (content: string, targetId?: string | null) => {
+  const handleAddAnnotation = async (content: string, targetId?: string | null) => {
     if (!content) {
       // Hack to clear filter from sidebar
       setActiveTargetId(null);
@@ -46,33 +46,37 @@ export default function Home() {
 
     const newAnnotation: Annotation = {
       id: Math.random().toString(36).substr(2, 9),
-      author: 'You',
+      author: 'Family Member',
       content,
-      timestamp: 'Just now',
+      timestamp: new Date().toISOString(),
       era: 'present',
+      status: 'pending',
       targetId: targetId || undefined
     };
 
-    const updatedChapters = chapters.map((ch, idx) => {
-      if (idx === currentChapterIndex) {
-        return {
-          ...ch,
-          annotations: [newAnnotation, ...ch.annotations]
-        };
-      }
-      return ch;
-    });
-
-    setChapters(updatedChapters);
+    if (!currentChapter) return;
+    
+    // Optimistic fallback for slow connections
+    const newAnnotations = [newAnnotation, ...(currentChapter.annotations || [])];
+    
+    try {
+      const chapterRef = doc(db, 'chapters', currentChapter.id);
+      await updateDoc(chapterRef, { annotations: newAnnotations });
+      alert("Annotation submitted! It will appear once approved by the family historian.");
+    } catch (e) {
+      console.error("Error saving annotation:", e);
+      alert("Failed to submit annotation.");
+    }
   };
 
-  const handleAddReply = (annotationId: string, content: string) => {
+  const handleAddReply = async (annotationId: string, content: string) => {
     const newReply: Annotation = {
       id: Math.random().toString(36).substr(2, 9),
-      author: 'You',
+      author: 'Family Member',
       content,
-      timestamp: 'Just now',
-      era: 'present'
+      timestamp: new Date().toISOString(),
+      era: 'present',
+      status: 'pending'
     };
 
     const addReplyToTree = (annotations: Annotation[]): Annotation[] => {
@@ -93,17 +97,17 @@ export default function Home() {
       });
     };
 
-    const updatedChapters = chapters.map((ch, idx) => {
-      if (idx === currentChapterIndex) {
-        return {
-          ...ch,
-          annotations: addReplyToTree(ch.annotations)
-        };
-      }
-      return ch;
-    });
-
-    setChapters(updatedChapters);
+    if (!currentChapter) return;
+    const newAnnotations = addReplyToTree(currentChapter.annotations || []);
+    
+    try {
+      const chapterRef = doc(db, 'chapters', currentChapter.id);
+      await updateDoc(chapterRef, { annotations: newAnnotations });
+      alert("Reply submitted! It will appear once approved by the family historian.");
+    } catch (e) {
+      console.error("Error saving reply:", e);
+      alert("Failed to submit reply.");
+    }
   };
 
   const handleLinkBack = (targetId: string) => {
@@ -143,13 +147,30 @@ export default function Home() {
         )}
         {currentView === 'voices' && (
           <DistantVoices 
-            chapter={currentChapter}
+            chapters={chapters}
             onAnnotate={handleAnnotate}
             activeAnnotationId={activeTargetId || undefined}
           />
         )}
         {currentView === 'timeline' && (
-          <TimelineView />
+          <TimelineView chapters={chapters} onNavigateToChapter={(idx, evType, targetId) => {
+            setCurrentChapterIndex(idx);
+            if (evType === 'voice') {
+              setCurrentView('voices');
+            } else if (evType === 'annotation' && targetId) {
+              setCurrentView('memoir');
+              setActiveTargetId(targetId);
+              setIsChorusOpen(true);
+              setTimeout(() => {
+                const element = document.getElementById(targetId);
+                if (element) {
+                   element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+              }, 150);
+            } else {
+              setCurrentView('memoir');
+            }
+          }} />
         )}
         
         {/* Floating Action Button for Annotations */}

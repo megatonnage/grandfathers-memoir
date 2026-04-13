@@ -1,121 +1,128 @@
 import React from 'react';
-import { Radio, Cpu, History, MessageSquarePlus } from 'lucide-react';
+import { History, MessageSquarePlus, Edit3, Quote } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
-import { Chapter } from '../types';
+import { Chapter, Annotation } from '../types';
 
 interface DistantVoicesProps {
-  chapter: Chapter;
-  onAnnotate: (targetId: string) => void;
+  chapters: Chapter[];
+  onAnnotate: (targetId?: string) => void;
   activeAnnotationId?: string;
 }
 
-export default function DistantVoices({ chapter, onAnnotate, activeAnnotationId }: DistantVoicesProps) {
-  const transmissions = [
-    {
-      id: 't1',
-      origin: 'X-7 Orbital Biosphere',
-      sender: 'DESCENDANT_REF_4419',
-      year: '2482',
-      content: "We have inherited your silences. In the year 2482, the air is no longer a medium for breath, but a canvas for data. We live within the 'Chorus'—a collective consciousness built upon the bones of your final archives.",
-      type: 'future'
-    },
-    {
-      id: 't2',
-      origin: 'The High Silt',
-      sender: 'ANCIENT_ELDER',
-      year: 'Ancient Past',
-      content: "To those who walk the earth when the forests have forgotten my name: I write this not in ink, but in the rhythm of the tides. My hands have touched the same soil that now cushions your feet.",
-      type: 'ancient'
-    }
-  ];
+export default function DistantVoices({ chapters, onAnnotate, activeAnnotationId }: DistantVoicesProps) {
+  const voices = chapters.flatMap(ch => 
+    (ch.annotations || [])
+      .filter(a => !a.targetId && a.status === 'approved')
+      .map(a => ({ ...a, chapterId: ch.id, chapterTitle: ch.title }))
+  ).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   return (
-    <div className="h-full bg-primary-container text-on-primary overflow-y-auto pt-24 pb-32 px-8">
+    <div className="h-full bg-primary-container text-on-primary overflow-y-auto pt-24 pb-32 px-8 relative">
       <div className="max-w-4xl mx-auto space-y-12">
-        <div className="space-y-2">
-          <span className="font-label text-[10px] uppercase tracking-[0.3em] text-on-primary/60 block">
-            Transmission Sequence 09.2482.VOICES
+        <div className="space-y-4">
+          <span className="font-label text-sm uppercase tracking-[0.3em] text-on-primary/60 block">
+            Overarching Insights & Reflections
           </span>
           <h2 className="text-5xl font-headline italic leading-tight">
             Distant <span className="text-on-tertiary-container">Voices</span>
           </h2>
+          <p className="font-body text-xl text-on-primary/80 max-w-2xl leading-relaxed">
+            These are the overarching memories, broad stories, and contexts that envelop the chapter as a whole, untethered from a specific sentence.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 gap-8">
-          {transmissions.map((t, index) => {
-            const hasAnnotation = chapter.annotations.some(a => a.targetId === t.id);
-            const isActive = activeAnnotationId === t.id;
+          {voices.length === 0 ? (
+            <div className="p-12 border border-on-primary/10 rounded-xl text-center space-y-4 bg-primary/20">
+              <Quote className="w-12 h-12 mx-auto text-on-primary/30" />
+              <p className="font-body text-lg italic text-on-primary/60">No distant voices have echoed here yet.</p>
+            </div>
+          ) : (
+            voices.map((v, index) => {
+              const isActive = activeAnnotationId === v.id;
 
-            return (
-              <motion.article 
-                key={t.id}
-                id={t.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.2 }}
-                className={cn(
-                  "p-8 md:p-12 relative overflow-hidden border transition-all duration-300 group",
-                  isActive 
-                    ? "bg-primary/40 border-on-tertiary-container shadow-[0_0_30px_rgba(244,136,121,0.2)]" 
-                    : "bg-primary/20 border-on-primary/10 hover:bg-primary/30",
-                  hasAnnotation && !isActive && "border-on-tertiary-container/30"
-                )}
-              >
-                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-                  {t.type === 'future' ? <Cpu className="w-24 h-24" /> : <History className="w-24 h-24" />}
-                </div>
-                
-                <div className="relative z-10 space-y-6">
-                  <div className="flex flex-wrap gap-8">
-                    <div>
-                      <span className="font-label text-[10px] text-on-primary/40 block mb-1 uppercase tracking-widest">Origin</span>
-                      <p className="font-label text-sm font-bold">{t.origin}</p>
-                    </div>
-                    <div>
-                      <span className="font-label text-[10px] text-on-primary/40 block mb-1 uppercase tracking-widest">Sender</span>
-                      <p className="font-label text-sm font-bold text-on-tertiary-container">{t.sender}</p>
-                    </div>
-                    <div>
-                      <span className="font-label text-[10px] text-on-primary/40 block mb-1 uppercase tracking-widest">Epoch</span>
-                      <p className="font-label text-sm font-bold">{t.year}</p>
-                    </div>
+              return (
+                <motion.article 
+                  key={v.id}
+                  id={v.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className={cn(
+                    "p-8 md:p-10 relative overflow-hidden border transition-all duration-300 group rounded-2xl",
+                    isActive 
+                      ? "bg-primary/40 border-on-tertiary-container shadow-[0_0_30px_rgba(244,136,121,0.2)]" 
+                      : "bg-primary/20 border-on-primary/10 hover:bg-primary/30"
+                  )}
+                >
+                  <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <Quote className="w-32 h-32" />
                   </div>
-
-                  <div className="h-[1px] w-full bg-on-primary/10" />
-
-                  <div className="relative">
-                    <p className="font-headline text-2xl leading-relaxed italic text-on-primary/90">
-                      "{t.content}"
-                    </p>
-                    <button 
-                      onClick={() => onAnnotate(t.id)}
-                      className="absolute -right-4 -top-4 opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-on-tertiary-container text-primary rounded-full shadow-lg hover:scale-110 active:scale-95"
-                      title="Annotate this transmission"
-                    >
-                      <MessageSquarePlus className="w-5 h-5" />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-on-tertiary-container animate-pulse" />
-                      <span className="font-label text-[10px] text-on-tertiary-container uppercase tracking-widest font-bold">
-                        Signal Verified
-                      </span>
+                  
+                  <div className="relative z-10 space-y-6">
+                    <div className="flex flex-wrap gap-8">
+                      <div>
+                        <span className="font-label text-[10px] text-on-primary/40 block mb-1 uppercase tracking-widest">Voice</span>
+                        <p className="font-label text-sm font-bold text-on-tertiary-container">{v.author}</p>
+                      </div>
+                      <div>
+                        <span className="font-label text-[10px] text-on-primary/40 block mb-1 uppercase tracking-widest">Transmission Sector</span>
+                        <p className="font-label text-sm font-bold">{v.chapterTitle}</p>
+                      </div>
+                      {v.historicalDate && (
+                        <div>
+                          <span className="font-label text-[10px] text-on-primary/40 block mb-1 uppercase tracking-widest">Timeline Anchor</span>
+                          <p className="font-label text-sm font-bold">{new Date(v.historicalDate + '-01').toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</p>
+                        </div>
+                      )}
+                      <div>
+                        <span className="font-label text-[10px] text-on-primary/40 block mb-1 uppercase tracking-widest">Transmission Date</span>
+                        <p className="font-label text-sm font-bold">{new Date(v.timestamp).toLocaleDateString()}</p>
+                      </div>
                     </div>
-                    {hasAnnotation && (
-                      <span className="font-label text-[10px] text-on-primary/40 italic">
-                        {chapter.annotations.filter(a => a.targetId === t.id).length} voices in chorus
-                      </span>
+
+                    <div className="h-[1px] w-full bg-on-primary/10" />
+
+                    <div className="relative">
+                      <p className="font-headline text-2xl leading-relaxed italic text-on-primary/90">
+                        "{v.content}"
+                      </p>
+                      <button 
+                        onClick={() => onAnnotate(v.id)}
+                        className="absolute -right-4 -bottom-6 opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 bg-on-tertiary-container text-primary rounded-full shadow-lg hover:scale-105 active:scale-95 font-label text-xs font-bold uppercase tracking-wider flex items-center gap-2"
+                        title="Reply to this voice"
+                      >
+                        <MessageSquarePlus className="w-4 h-4" /> Reply
+                      </button>
+                    </div>
+
+                    {v.replies && v.replies.length > 0 && (
+                      <div className="pt-6 border-t border-on-primary/10 space-y-4">
+                        <span className="font-label text-[10px] text-on-primary/40 uppercase tracking-widest font-bold">Echoes</span>
+                        {v.replies.filter(r => r.status === 'approved').map(reply => (
+                          <div key={reply.id} className="bg-primary/30 p-4 rounded-xl border border-on-primary/5">
+                            <p className="font-body text-sm italic text-on-primary/80 mb-2">"{reply.content}"</p>
+                            <p className="font-label text-xs text-on-tertiary-container">— {reply.author}</p>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
-                </div>
-              </motion.article>
-            );
-          })}
+                </motion.article>
+              );
+            })
+          )}
         </div>
       </div>
+
+      <button 
+        onClick={() => onAnnotate()}
+        className="fixed bottom-24 right-8 w-14 h-14 bg-on-tertiary-container text-primary rounded-full flex items-center justify-center shadow-2xl z-50 hover:scale-110 active:scale-95 transition-all cursor-pointer"
+        title="Add a Distant Voice"
+      >
+        <Edit3 className="w-6 h-6" />
+      </button>
     </div>
   );
 }

@@ -7,6 +7,8 @@ export interface Annotation {
   timestamp: string;
   era: Era;
   targetId?: string; // ID of the paragraph or line being annotated
+  historicalDate?: string; // String for arbitrary Month/Year parsing down the road (e.g. 'April 1975')
+  status: 'pending' | 'approved' | 'rejected';
   replies?: Annotation[];
 }
 

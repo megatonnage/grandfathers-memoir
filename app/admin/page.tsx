@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Upload, MessageSquare, Settings, Check, X, FileText, Save, Image as ImageIcon } from 'lucide-react';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { Upload, MessageSquare, Settings, Check, X, FileText, Save, Image as ImageIcon, Trash2, UserPlus, Shield } from 'lucide-react';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Chapter } from '../../types';
 import { cn } from '../../lib/utils';
@@ -14,6 +14,14 @@ export default function AdminDashboard() {
   const [uploadMessage, setUploadMessage] = useState('');
 
   const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserDisplayName, setNewUserDisplayName] = useState('');
+  const [newUserRole, setNewUserRole] = useState<'family' | 'admin'>('family');
+  const [newVoiceChapterId, setNewVoiceChapterId] = useState('');
+  const [newVoiceContent, setNewVoiceContent] = useState('');
+  const [newVoiceHistoricalDate, setNewVoiceHistoricalDate] = useState('');
+  const [newVoiceTransmissionDate, setNewVoiceTransmissionDate] = useState(new Date().toISOString().slice(0, 10));
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ title: '', contentVi: '', contentEn: '' });
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -45,12 +53,48 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const q = query(collection(db, 'chapters'), orderBy('order', 'asc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribeChapters = onSnapshot(q, (snapshot) => {
       const loaded = snapshot.docs.map(doc => doc.data() as Chapter);
       setChapters(loaded);
     });
-    return () => unsubscribe();
+
+    const uq = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
+    const unsubscribeUsers = onSnapshot(uq, (snapshot) => {
+      setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    return () => {
+      unsubscribeChapters();
+      unsubscribeUsers();
+    };
   }, []);
+
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUserEmail || !newUserDisplayName) return;
+    try {
+      await addDoc(collection(db, 'users'), {
+        email: newUserEmail.toLowerCase(),
+        displayName: newUserDisplayName,
+        role: newUserRole,
+        createdAt: new Date().toISOString()
+      });
+      setNewUserEmail('');
+      setNewUserDisplayName('');
+    } catch (error) {
+      console.error(error);
+      alert('Failed to add user');
+    }
+  };
+
+  const handleRemoveUser = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'users', id));
+    } catch (error) {
+      console.error(error);
+      alert('Failed to remove user');
+    }
+  };
 
   const handleEditChapter = async (chapterId: string) => {
     try {
@@ -59,12 +103,40 @@ export default function AdminDashboard() {
       setEditingId(null);
     } catch (e) {
       console.error(e);
-      alert('Failed to update chapter');
+      alert('Failed to save chapter.');
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, isTranslation: boolean = false) => {
-    const file = event.target.files?.[0];
+  const handleAddDistantVoice = async (e: React.FormEvent) => {
+     e.preventDefault();
+     if (!newVoiceChapterId || !newVoiceContent) return;
+     const chapter = chapters.find(c => c.id === newVoiceChapterId);
+     if (!chapter) return;
+     
+     const newAnnotation = {
+       id: Math.random().toString(36).substr(2, 9),
+       author: 'Family Historian',
+       content: newVoiceContent,
+       historicalDate: newVoiceHistoricalDate || undefined,
+       timestamp: newVoiceTransmissionDate ? new Date(newVoiceTransmissionDate).toISOString() : new Date().toISOString(),
+       era: 'present' as const,
+       status: 'approved' as const
+     };
+
+     const newAnnotations = [newAnnotation, ...(chapter.annotations || [])];
+     try {
+       await updateDoc(doc(db, 'chapters', newVoiceChapterId), { annotations: newAnnotations });
+       setNewVoiceContent('');
+       setNewVoiceHistoricalDate('');
+       alert('Distant Voice correctly routed into the collective ether!');
+     } catch (err) {
+       console.error(err);
+       alert('Transmission failed. Check connections.');
+     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, isTranslation: boolean = false) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
@@ -106,6 +178,54 @@ export default function AdminDashboard() {
       console.error(error);
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const getAllPendingAnnotations = (chaptersList: Chapter[]) => {
+    let pending: any[] = [];
+    
+    const extractPending = (annotations: any[], chapterId: string, chapterTitle: string, parentContent?: string) => {
+      annotations.forEach((ann: any) => {
+        if (ann.status === 'pending') {
+          pending.push({ ...ann, chapterId, chapterTitle, parentContent });
+        }
+        if (ann.replies) {
+          extractPending(ann.replies, chapterId, chapterTitle, ann.content);
+        }
+      });
+    };
+
+    chaptersList.forEach(ch => {
+      if (ch.annotations) extractPending(ch.annotations, ch.id, ch.title);
+    });
+    
+    return pending;
+  };
+
+  const pendingModerations = getAllPendingAnnotations(chapters);
+
+  const handleModerate = async (chapterId: string, annotationId: string, action: 'approve' | 'reject') => {
+    const chapter = chapters.find(c => c.id === chapterId);
+    if (!chapter) return;
+
+    const processTree = (annotations: any[]): any[] => {
+      return annotations.filter(a => !(action === 'reject' && a.id === annotationId)).map(a => {
+        if (a.id === annotationId && action === 'approve') {
+          return { ...a, status: 'approved' };
+        }
+        if (a.replies) {
+          return { ...a, replies: processTree(a.replies) };
+        }
+        return a;
+      });
+    };
+
+    const newAnnotations = processTree(chapter.annotations || []);
+    try {
+      await updateDoc(doc(db, 'chapters', chapterId), { annotations: newAnnotations });
+    } catch (e) {
+      console.error(e);
+      alert('Failed to update moderation status.');
     }
   };
 
@@ -173,6 +293,41 @@ export default function AdminDashboard() {
               </div>
             </div>
             
+            <div className="mt-12 bg-white rounded-xl border border-outline-variant p-8 shadow-sm">
+               <h3 className="text-lg font-bold font-label mb-2 flex items-center gap-2"><MessageSquare className="w-5 h-5 text-tertiary" /> Transmit a Distant Voice</h3>
+               <p className="text-outline text-sm mb-6">Manually push an overarching contextual reflection straight into the Distant Voices layer of a chapter. Mod queues are completely bypassed.</p>
+               <form onSubmit={handleAddDistantVoice} className="space-y-4">
+                 <div>
+                   <label className="text-xs font-bold text-outline uppercase tracking-wider block mb-2">Target Chapter</label>
+                   <select value={newVoiceChapterId} onChange={e => setNewVoiceChapterId(e.target.value)} required className="w-full p-3 border border-outline-variant rounded text-sm font-headline bg-white cursor-pointer">
+                     <option value="" disabled>Select a routing origin...</option>
+                     {chapters.map(ch => (
+                       <option key={ch.id} value={ch.id}>{ch.title}</option>
+                     ))}
+                   </select>
+                 </div>
+                 <div className="flex gap-4">
+                   <div className="flex-1">
+                     <label className="text-xs font-bold text-outline uppercase tracking-wider block mb-2">Historical Timestamp (Month/Year)</label>
+                     <input type="month" value={newVoiceHistoricalDate} onChange={e => setNewVoiceHistoricalDate(e.target.value)} required className="w-full p-3 border border-outline-variant rounded font-body text-sm bg-white" />
+                     <p className="text-[10px] uppercase tracking-widest text-outline mt-2 font-label">Tethers this pulse to the main historic timeline.</p>
+                   </div>
+                   <div className="flex-1">
+                     <label className="text-xs font-bold text-outline uppercase tracking-wider block mb-2">Transmission Date Override</label>
+                     <input type="date" value={newVoiceTransmissionDate} onChange={e => setNewVoiceTransmissionDate(e.target.value)} required className="w-full p-3 border border-outline-variant rounded font-body text-sm bg-white" />
+                     <p className="text-[10px] uppercase tracking-widest text-outline mt-2 font-label">Defaults to today, but can be spoofed or backdated.</p>
+                   </div>
+                 </div>
+                 <div>
+                   <label className="text-xs font-bold text-outline uppercase tracking-wider block mb-2">Content Transmission</label>
+                   <textarea rows={4} value={newVoiceContent} onChange={e => setNewVoiceContent(e.target.value)} required placeholder={`"In the winter of the third decade, finding food meant pulling secrets strictly out of the dry sod..."`} className="w-full p-3 border border-outline-variant rounded font-body text-sm italic" />
+                 </div>
+                 <button type="submit" className="bg-tertiary text-white px-6 py-3 rounded font-label hover:bg-tertiary/90 transition-colors font-medium text-sm border-0 cursor-pointer">
+                   Beam Message
+                 </button>
+               </form>
+            </div>
+
             <div className="mt-12 bg-white rounded-xl border border-outline-variant p-8 shadow-sm">
                <h3 className="text-lg font-bold font-label mb-6">Existing Chapters</h3>
                
@@ -257,24 +412,34 @@ export default function AdminDashboard() {
           <section className="max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-3xl font-headline text-on-surface mb-6">Moderation Queue</h2>
             
-            <div className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm flex items-start justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="font-bold text-sm bg-surface-container px-2 py-1 rounded">Auntie Linh</span>
-                  <span className="text-xs text-outline">in Chapter 1 (Past)</span>
-                </div>
-                <p className="font-body text-lg italic text-on-surface leading-relaxed">
-                  "Ba used to tell us to be quiet so we wouldn't wake the silver scales..."
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <button className="p-2 bg-green-50 text-green-700 hover:bg-green-100 rounded-full transition-colors cursor-pointer" title="Approve">
-                  <Check className="w-5 h-5" />
-                </button>
-                <button className="p-2 bg-red-50 text-tertiary hover:bg-red-100 rounded-full transition-colors cursor-pointer" title="Reject">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+            <div className="space-y-4">
+              {pendingModerations.length === 0 ? (
+                <p className="text-sm text-outline italic py-8">No pending annotations in the queue.</p>
+              ) : (
+                pendingModerations.map(pm => (
+                  <div key={pm.id} className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm flex items-start justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="font-bold text-sm bg-surface-container px-2 py-1 rounded">{pm.author}</span>
+                        <span className="text-xs text-outline">
+                          in {pm.chapterTitle} {pm.parentContent ? `(Replying to: "${pm.parentContent.substring(0,30)}...")` : ''}
+                        </span>
+                      </div>
+                      <p className="font-body text-lg italic text-on-surface leading-relaxed">
+                        "{pm.content}"
+                      </p>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button onClick={() => handleModerate(pm.chapterId, pm.id, 'approve')} className="p-2 bg-green-50 text-green-700 hover:bg-green-100 rounded-full transition-colors cursor-pointer" title="Approve">
+                        <Check className="w-5 h-5" />
+                      </button>
+                      <button onClick={() => handleModerate(pm.chapterId, pm.id, 'reject')} className="p-2 bg-red-50 text-tertiary hover:bg-red-100 rounded-full transition-colors cursor-pointer" title="Reject">
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </section>
         )}
@@ -282,7 +447,49 @@ export default function AdminDashboard() {
         {activeTab === 'settings' && (
           <section className="max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-3xl font-headline text-on-surface mb-6">Family Settings</h2>
-            <p className="text-outline">Manage whitelisted emails and user access permissions.</p>
+            
+            <div className="bg-white rounded-xl border border-outline-variant p-8 shadow-sm mb-8">
+              <h3 className="text-lg font-bold font-label mb-4 flex items-center gap-2"><UserPlus className="w-5 h-5 text-primary" /> Invite Family Member</h3>
+              <form onSubmit={handleAddUser} className="flex gap-4 items-end flex-wrap">
+                <div className="flex-[2] min-w-[200px]">
+                  <label className="text-xs font-bold text-outline uppercase tracking-wider block mb-2">Display Name</label>
+                  <input type="text" value={newUserDisplayName} onChange={e => setNewUserDisplayName(e.target.value)} required placeholder="Auntie Linh" className="w-full p-3 border border-outline-variant rounded font-body text-sm" />
+                </div>
+                <div className="flex-[3] min-w-[200px]">
+                  <label className="text-xs font-bold text-outline uppercase tracking-wider block mb-2">Email Address</label>
+                  <input type="email" value={newUserEmail} onChange={e => setNewUserEmail(e.target.value)} required placeholder="cousin@example.com" className="w-full p-3 border border-outline-variant rounded font-body text-sm" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-outline uppercase tracking-wider block mb-2">Role Status</label>
+                  <select value={newUserRole} onChange={e => setNewUserRole(e.target.value as 'admin'|'family')} className="p-3 border border-outline-variant rounded text-sm font-label bg-white appearance-none min-w-[150px]">
+                    <option value="family">Family (Reader)</option>
+                    <option value="admin">Moderator (Admin)</option>
+                  </select>
+                </div>
+                <button type="submit" className="bg-primary text-on-primary px-6 py-3 rounded font-label hover:bg-primary-container transition-colors font-medium text-sm">Add User</button>
+              </form>
+            </div>
+
+            <div className="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+               <div className="p-6 bg-surface-container border-b border-outline-variant flex items-center justify-between">
+                 <h3 className="font-bold flex items-center gap-2"><Shield className="w-4 h-4 text-primary" /> Whitelisted Access Registry</h3>
+                 <span className="text-xs font-bold font-label bg-white px-3 py-1 rounded-full text-outline-variant text-tertiary">{users.length} Active Members</span>
+               </div>
+               <div className="divide-y divide-outline-variant">
+                 {users.map(user => (
+                   <div key={user.id} className="p-6 flex items-center justify-between hover:bg-surface/50 transition-colors">
+                     <div>
+                       <h4 className="font-bold text-on-surface text-lg font-headline">{user.displayName} <span className="font-body text-sm text-outline ml-2 font-normal">({user.email})</span></h4>
+                       <p className="text-sm text-outline capitalize font-label mt-1">Role: <span className={cn("font-bold", user.role === 'admin' ? "text-primary" : "text-tertiary")}>{user.role}</span></p>
+                     </div>
+                     <button onClick={() => handleRemoveUser(user.id)} className="p-2 text-outline hover:text-tertiary hover:bg-red-50 rounded transition-colors" title="Revoke Access">
+                       <Trash2 className="w-5 h-5" />
+                     </button>
+                   </div>
+                 ))}
+                 {users.length === 0 && <p className="p-8 text-center text-outline italic">No family members have been whitelisted yet.</p>}
+               </div>
+            </div>
           </section>
         )}
       </main>
