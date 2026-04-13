@@ -8,14 +8,15 @@ import BilingualReader from '../components/BilingualReader';
 import ChorusSidebar from '../components/ChorusSidebar';
 import TimelineView from '../components/TimelineView';
 import DistantVoices from '../components/DistantVoices';
+import LandingPage from '../components/LandingPage';
 import { Book, Users, Radio, History, Edit3 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Chapter, Annotation } from '../types';
 
-type View = 'memoir' | 'chorus' | 'voices' | 'timeline';
+type View = 'landing' | 'memoir' | 'chorus' | 'voices' | 'timeline';
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<View>('memoir');
+  const [currentView, setCurrentView] = useState<View>('landing');
   const [isChorusOpen, setIsChorusOpen] = useState(false);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -129,7 +130,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
-      <Header />
+      {currentView !== 'landing' && <Header />}
 
       <main className="flex-1 relative overflow-hidden">
         {!currentChapter ? (
@@ -138,6 +139,9 @@ export default function Home() {
           </div>
         ) : (
           <>
+            {currentView === 'landing' && (
+              <LandingPage onEnter={() => setCurrentView('memoir')} />
+            )}
             {currentView === 'memoir' && (
           <BilingualReader 
             chapter={currentChapter} 
@@ -203,6 +207,7 @@ export default function Home() {
       </main>
 
       {/* Bottom Navigation */}
+      {currentView !== 'landing' && (
       <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-8 bg-surface/95 backdrop-blur-md border-t border-outline-variant">
         <NavButton 
           active={currentView === 'memoir'} 
@@ -211,11 +216,15 @@ export default function Home() {
           label="Memoir"
         />
         <NavButton 
-          active={currentView === 'chorus'} 
+          active={isChorusOpen} 
           onClick={() => {
-            setCurrentView('memoir');
-            setActiveTargetId(null);
-            setIsChorusOpen(true);
+            if (isChorusOpen) {
+              setIsChorusOpen(false);
+            } else {
+              setCurrentView('memoir');
+              setActiveTargetId(null);
+              setIsChorusOpen(true);
+            }
           }}
           icon={<Users className="w-5 h-5" />}
           label="Chorus"
@@ -233,6 +242,7 @@ export default function Home() {
           label="Timeline"
         />
       </nav>
+      )}
     </div>
   );
 }
