@@ -21,6 +21,7 @@ export interface Chapter {
   image?: string;
   imageCaption?: string;
   annotations: Annotation[];
+  timestamp?: string;
 }
 
 export interface SpeculativeResponse {
@@ -29,4 +30,14 @@ export interface SpeculativeResponse {
   era: Era;
   content: string;
   targetChapterId: string;
+}
+
+export interface GalleryImage {
+  id: string;
+  url: string;
+  caption?: string;
+  uploadedBy: string;
+  uploadedAt: string;
+  historicalDate?: string;
+  annotations: Annotation[];
 }

@@ -25,13 +25,15 @@ The chill of the river water caressed our bare feet, reminding us of our roots a
         timestamp: 'Yesterday, 4:12 PM',
         era: 'past',
         targetId: 'p1',
+        status: 'approved',
         replies: [
           {
             id: 'a1-r1',
             author: 'Minh (Grandson)',
             content: 'That\'s beautiful. I\'m trying to translate "sleeping stars" back into the speculative verse for the archive. Does "Ngôi sao ngủ quên" feel right?',
             timestamp: '2h ago',
-            era: 'present'
+            era: 'present',
+            status: 'approved'
           }
         ]
       }

@@ -3,14 +3,15 @@
 import React, { useState } from 'react';
 import { Search, CornerDownRight, BookOpen, Quote, Maximize2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Chapter } from '../types';
+import { Chapter, GalleryImage } from '../types';
 
 interface TimelineViewProps {
   chapters: Chapter[];
+  galleryImages: GalleryImage[];
   onNavigateToChapter: (index: number, evType?: string, targetId?: string) => void;
 }
 
-export default function TimelineView({ chapters, onNavigateToChapter }: TimelineViewProps) {
+export default function TimelineView({ chapters, galleryImages, onNavigateToChapter }: TimelineViewProps) {
   // Combine and sort all events for a unified timeline
   const timelineEvents = React.useMemo(() => {
     let events: any[] = [];
@@ -24,7 +25,7 @@ export default function TimelineView({ chapters, onNavigateToChapter }: Timeline
         content: chapter.contentEn?.replace(/[#*]/g, '').substring(0, 200) + '...',
         author: 'Grandfather',
         epochIndex: index,
-        sortDate: chapter.timestamp || new Date(2000, index, 1).toISOString(), // fallback
+        sortDate: (chapter as any).timestamp || new Date(2000, index, 1).toISOString(), // fallback
       });
 
       // Add their approved tributaries
@@ -45,9 +46,38 @@ export default function TimelineView({ chapters, onNavigateToChapter }: Timeline
         });
       }
     });
+    // Add Gallery items and their annotations
+    galleryImages.forEach(img => {
+       // The image upload itself isn't necessarily a timeline event, but its annotations are.
+       // However, we can treat the photo upload as an event too:
+       events.push({
+          type: 'photo',
+          id: img.id,
+          title: 'Visual Artifact',
+          content: img.caption || 'A photo was added to the repository.',
+          author: img.uploadedBy,
+          historicalDate: img.historicalDate,
+          sortDate: img.historicalDate ? new Date(img.historicalDate + '-01').toISOString() : img.uploadedAt,
+          url: img.url
+       });
+
+       if (img.annotations) {
+          img.annotations.filter(a => a.status === 'approved' || true).forEach(ann => {
+             events.push({
+                type: 'photo_annotation',
+                id: ann.id,
+                title: 'Artifact Reflection',
+                content: ann.content,
+                author: ann.author,
+                sortDate: ann.timestamp,
+                targetNodeId: `img-${img.id}`
+             });
+          });
+       }
+    });
 
     return events.sort((a, b) => new Date(a.sortDate).getTime() - new Date(b.sortDate).getTime());
-  }, [chapters]);
+  }, [chapters, galleryImages]);
 
   return (
     <div className="h-full bg-[#0B0E0C] text-[#F1F3F2] overflow-x-hidden overflow-y-auto pt-24 pb-40 px-4 md:px-0">
@@ -73,9 +103,11 @@ export default function TimelineView({ chapters, onNavigateToChapter }: Timeline
             {timelineEvents.map((ev, index) => {
               const isChapter = ev.type === 'chapter';
               const isVoice = ev.type === 'voice';
+              const isPhoto = ev.type === 'photo';
+              const isPhotoAnn = ev.type === 'photo_annotation';
               
               // Colors based on type
-              const dotColor = isChapter ? 'bg-[#85B084]' : (isVoice ? 'bg-[#E59368]' : 'bg-[#939694]');
+              const dotColor = isChapter ? 'bg-[#85B084]' : (isVoice ? 'bg-[#E59368]' : (isPhoto || isPhotoAnn ? 'bg-[#D9A37A]' : 'bg-[#939694]'));
               const ringColor = isChapter ? 'border-[#85B084]/30' : (isVoice ? 'border-[#E59368]/30' : 'border-[#939694]/30');
               const badgeBg = isChapter ? 'bg-[#1A251D]' : (isVoice ? 'bg-[#2A1E18]' : 'bg-[#222423]');
               const badgeText = isChapter ? 'text-[#85B084]' : (isVoice ? 'text-[#E59368]' : 'text-[#939694]');
@@ -125,6 +157,12 @@ export default function TimelineView({ chapters, onNavigateToChapter }: Timeline
 
                     {/* Metrics / Metadata Grid */}
                     <div className="mt-6 flex flex-wrap items-center gap-8 border-t border-white/[0.04] pt-4">
+                      {(isPhoto && ev.url) && (
+                        <div className="w-full mb-4">
+                          <img src={ev.url} alt="Artifact" className="h-48 w-full object-cover rounded-xl border border-white/[0.04]" />
+                        </div>
+                      )}
+                      
                       {isChapter ? (
                          <>
                             <div className="flex flex-col gap-1">
