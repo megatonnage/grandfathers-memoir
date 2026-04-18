@@ -26,14 +26,32 @@ if (!admin.apps.length) {
   }
 }
 
-export const adminDb = new admin.firestore.Firestore({
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  databaseId: "ongba",
-  credentials: {
-    client_email: process.env.FIREBASE_CLIENT_EMAIL,
-    private_key: formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY)
+let dbInstance;
+try {
+  if (process.env.FIREBASE_PRIVATE_KEY) {
+    dbInstance = new admin.firestore.Firestore({
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      databaseId: "ongba",
+      credentials: {
+        client_email: process.env.FIREBASE_CLIENT_EMAIL,
+        private_key: formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY)
+      }
+    });
   }
-});
+} catch (e) {
+  console.log('Skipping Firestore initialization at build time due to invalid key format.');
+}
+export const adminDb = dbInstance;
 
-export const adminAuth = admin.auth();
-export const adminStorage = admin.storage();
+let storageInstance, authInstance;
+try {
+  if (admin.apps.length > 0) {
+    storageInstance = admin.storage();
+    authInstance = admin.auth();
+  }
+} catch (e) {
+  console.log('Skipping Storage/Auth init at build time.');
+}
+
+export const adminStorage = storageInstance;
+export const adminAuth = authInstance;
