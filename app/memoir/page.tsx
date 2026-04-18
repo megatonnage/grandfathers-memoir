@@ -11,7 +11,7 @@ import DistantVoices from '../../components/DistantVoices';
 import LandingPage from '../../components/LandingPage';
 import { Book, Users, Radio, History, Edit3 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { Chapter, Annotation } from '../../types';
+import { Chapter, Annotation, GalleryImage } from '../../types';
 
 type View = 'landing' | 'memoir' | 'chorus' | 'voices' | 'timeline';
 
@@ -20,15 +20,26 @@ export default function Home() {
   const [isChorusOpen, setIsChorusOpen] = useState(false);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [activeTargetId, setActiveTargetId] = useState<string | null>(null);
 
   useEffect(() => {
     const q = query(collection(db, 'chapters'), orderBy('order', 'asc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribeChapters = onSnapshot(q, (snapshot) => {
       const loadedChapters = snapshot.docs.map(doc => doc.data() as Chapter);
       setChapters(loadedChapters);
     });
-    return () => unsubscribe();
+
+    const gq = query(collection(db, 'gallery'), orderBy('timestamp', 'desc'));
+    const unsubscribeGallery = onSnapshot(gq, (snapshot) => {
+      const loadedImages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GalleryImage));
+      setGalleryImages(loadedImages);
+    });
+
+    return () => {
+      unsubscribeChapters();
+      unsubscribeGallery();
+    };
   }, []);
 
   const currentChapter = chapters[currentChapterIndex];
@@ -157,7 +168,7 @@ export default function Home() {
           />
         )}
         {currentView === 'timeline' && (
-          <TimelineView chapters={chapters} onNavigateToChapter={(idx, evType, targetId) => {
+          <TimelineView chapters={chapters} galleryImages={galleryImages} onNavigateToChapter={(idx, evType, targetId) => {
             setCurrentChapterIndex(idx);
             if (evType === 'voice') {
               setCurrentView('voices');
