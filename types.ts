@@ -28,8 +28,9 @@ export interface GalleryImage {
   id: string;
   url: string;
   caption: string;
-  uploadedAt: string;
   uploadedBy: string;
+  uploadedAt: string;
+  historicalDate?: string;
   annotations: Annotation[];
 }
 
@@ -39,14 +40,4 @@ export interface SpeculativeResponse {
   era: Era;
   content: string;
   targetChapterId: string;
-}
-
-export interface GalleryImage {
-  id: string;
-  url: string;
-  caption?: string;
-  uploadedBy: string;
-  uploadedAt: string;
-  historicalDate?: string;
-  annotations: Annotation[];
 }
