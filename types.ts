@@ -6,7 +6,7 @@ export interface Annotation {
   content: string;
   timestamp: string;
   era: Era;
-  targetId?: string; // ID of the paragraph or line being annotated
+  targetId?: string; // ID of the paragraph, line, or image being annotated
   historicalDate?: string; // String for arbitrary Month/Year parsing down the road (e.g. 'April 1975')
   status: 'pending' | 'approved' | 'rejected';
   replies?: Annotation[];
@@ -22,6 +22,15 @@ export interface Chapter {
   imageCaption?: string;
   annotations: Annotation[];
   timestamp?: string;
+}
+
+export interface GalleryImage {
+  id: string;
+  url: string;
+  caption: string;
+  uploadedAt: string;
+  uploadedBy: string;
+  annotations: Annotation[];
 }
 
 export interface SpeculativeResponse {
