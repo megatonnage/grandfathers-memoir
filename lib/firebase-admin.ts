@@ -1,14 +1,18 @@
 import * as admin from 'firebase-admin';
 
-// Initialize Firebase Admin only if it hasn't been initialized already to prevent Next.js hot-reload crashes
+const formatPrivateKey = (key?: string) => {
+  if (!key) return undefined;
+  // Handle cases where Vercel injects literal quotes or escaped newlines
+  return key.replace(/\\n/g, '\n').replace(/^"|"$/g, '').trim();
+};
+
 if (!admin.apps.length) {
   try {
     admin.initializeApp({
       credential: admin.credential.cert({
         projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        // Replace escaped newline characters if securely stored in a single line
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        privateKey: formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY),
       }),
       storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     });
@@ -17,13 +21,12 @@ if (!admin.apps.length) {
   }
 }
 
-// Explicitly initialize the database class to target the correctly named instance instead of '(default)'
 export const adminDb = new admin.firestore.Firestore({
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   databaseId: "ongba",
   credentials: {
     client_email: process.env.FIREBASE_CLIENT_EMAIL,
-    private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
+    private_key: formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY)
   }
 });
 
