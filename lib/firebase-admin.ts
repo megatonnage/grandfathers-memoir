@@ -2,8 +2,13 @@ import * as admin from 'firebase-admin';
 
 const formatPrivateKey = (key?: string) => {
   if (!key) return undefined;
-  // Handle cases where Vercel injects literal quotes or escaped newlines
-  return key.replace(/\\n/g, '\n').replace(/^"|"$/g, '').trim();
+  try {
+    if (key.startsWith('"') && key.endsWith('"')) {
+      const parsed = JSON.parse(key);
+      if (typeof parsed === 'string') return parsed;
+    }
+  } catch (e) {}
+  return key.replace(/\\n/g, '\n').replace(/^["']|["']$/g, '').trim();
 };
 
 if (!admin.apps.length) {
