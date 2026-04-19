@@ -3,14 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import Header from '../../components/Header';
+// Header removed - using Silt & Stone logo instead
 import BilingualReader from '../../components/BilingualReader';
 import ChorusSidebar from '../../components/ChorusSidebar';
 import TimelineView from '../../components/TimelineView';
 import DistantVoices from '../../components/DistantVoices';
 import LandingPage from '../../components/LandingPage';
 import Gallery from '../../components/Gallery';
-import { Book, Users, Radio, History, Edit3, Image as ImageIcon } from 'lucide-react';
+import { Book, Users, Radio, History, Edit3, Image as ImageIcon, Layers } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Chapter, Annotation, GalleryImage } from '../../types';
 
@@ -142,7 +142,16 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
-      {currentView !== 'landing' && <Header />}
+      {/* Silt & Stone Logo - Upper Left */}
+      <a 
+        href="/" 
+        className="fixed top-4 left-4 z-50 flex items-center gap-2 px-3 py-2 bg-surface/95 backdrop-blur-sm rounded-lg border border-outline-variant hover:border-primary/30 transition-colors"
+      >
+        <Layers className="text-primary w-5 h-5" />
+        <span className="font-headline font-bold text-on-surface italic tracking-tight text-sm">
+          Silt & Stone
+        </span>
+      </a>
 
       <main className="flex-1 relative overflow-hidden">
         {!currentChapter ? (
