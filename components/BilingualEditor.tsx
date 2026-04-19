@@ -155,7 +155,7 @@ export default function BilingualEditor({ chapter, onSave }: BilingualEditorProp
           <div className="px-6 py-4">
             <div className="inline-block border-b-2 border-primary/40 pb-1 mb-4">
               <span className="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface/60 font-semibold">
-                Bản Gốc • {chapter.year}
+                Bản Gốc • Vietnamese
               </span>
             </div>
 
@@ -196,7 +196,7 @@ export default function BilingualEditor({ chapter, onSave }: BilingualEditorProp
           <div className="px-6 py-4">
             <div className="inline-block border-b-2 border-primary/20 pb-1 mb-4">
               <span className="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface/50 font-semibold">
-                Translation • Legacy
+                Translation • English
               </span>
             </div>
 

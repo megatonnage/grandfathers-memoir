@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useState as useStateLocal } from 'react';
 import { Upload, MessageSquare, Settings, FileText, Image as ImageIcon, Users, BookOpen, Check, X } from 'lucide-react';
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
@@ -47,12 +48,57 @@ export default function AdminDashboard() {
     };
   }, [selectedChapter?.id]);
 
-  const handleSaveChapter = async (chapterId: string, updates: { contentVi: string; contentEn: string }) => {
+  const handleSaveChapter = async (chapterId: string, updates: { contentVi?: string; contentEn?: string; title?: string; year?: string; order?: number }) => {
     try {
       await updateDoc(doc(db, 'chapters', chapterId), updates);
     } catch (e) {
       console.error('Failed to save chapter:', e);
       throw e;
+    }
+  };
+
+  const handleAddChapter = async (insertIndex: number) => {
+    const newOrder = insertIndex + 0.5; // Temporary order for insertion
+    const newChapter: Omit<Chapter, 'id'> = {
+      title: 'New Chapter',
+      year: '',
+      contentVi: '',
+      contentEn: '',
+      annotations: [],
+      order: newOrder
+    };
+
+    try {
+      await addDoc(collection(db, 'chapters'), newChapter);
+      // Reorder chapters to fix the .5 order
+      const sortedChapters = [...chapters];
+      sortedChapters.splice(insertIndex, 0, { ...newChapter, id: 'temp' } as Chapter);
+      
+      // Update all chapter orders
+      for (let i = 0; i < sortedChapters.length; i++) {
+        if (sortedChapters[i].id !== 'temp') {
+          await updateDoc(doc(db, 'chapters', sortedChapters[i].id), { order: i });
+        }
+      }
+    } catch (e) {
+      console.error('Failed to add chapter:', e);
+      alert('Failed to add chapter.');
+    }
+  };
+
+  const handleDeleteChapter = async (chapterId: string) => {
+    if (!confirm('Are you sure you want to delete this chapter?')) return;
+    
+    try {
+      await deleteDoc(doc(db, 'chapters', chapterId));
+      // Reorder remaining chapters
+      const remainingChapters = chapters.filter(c => c.id !== chapterId);
+      for (let i = 0; i < remainingChapters.length; i++) {
+        await updateDoc(doc(db, 'chapters', remainingChapters[i].id), { order: i });
+      }
+    } catch (e) {
+      console.error('Failed to delete chapter:', e);
+      alert('Failed to delete chapter.');
     }
   };
 
@@ -299,35 +345,64 @@ export default function AdminDashboard() {
                   </div>
 
                   <div className="space-y-3">
-                    {chapters.map((chapter) => (
-                      <button
-                        key={chapter.id}
-                        onClick={() => setSelectedChapter(chapter)}
-                        className="w-full text-left p-4 bg-white rounded-xl border border-outline-variant hover:border-primary/30 hover:shadow-sm transition-all"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="font-headline font-bold text-lg text-on-surface">{chapter.title}</h3>
-                            <p className="text-sm text-outline font-label mt-1">{chapter.year}</p>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-xs text-outline font-label">
-                              {chapter.contentVi.split('\n\n').filter(p => p.trim()).length} paragraphs
-                            </span>
-                            {chapter.annotations?.length > 0 && (
-                              <span className="block text-xs text-primary font-label mt-1">
-                                {chapter.annotations.length} annotations
-                              </span>
-                            )}
-                          </div>
+                    {/* Add Chapter at Beginning */}
+                    <button
+                      onClick={() => handleAddChapter(0)}
+                      className="w-full py-3 border-2 border-dashed border-outline-variant rounded-xl text-outline font-label hover:border-primary hover:text-primary transition-colors"
+                    >
+                      + Add Chapter Here
+                    </button>
+
+                    {chapters.map((chapter, index) => (
+                      <div key={chapter.id} className="group">
+                        <div className="flex items-start gap-3">
+                          <button
+                            onClick={() => setSelectedChapter(chapter)}
+                            className="flex-1 text-left p-4 bg-white rounded-xl border border-outline-variant hover:border-primary/30 hover:shadow-sm transition-all"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <EditableTitle 
+                                  title={chapter.title} 
+                                  onSave={(newTitle) => handleSaveChapter(chapter.id, { title: newTitle })}
+                                />
+                                <p className="text-sm text-outline font-label mt-1">{chapter.year || 'No year set'}</p>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-xs text-outline font-label">
+                                  {chapter.contentVi.split('\n\n').filter(p => p.trim()).length} paragraphs
+                                </span>
+                                {chapter.annotations?.length > 0 && (
+                                  <span className="block text-xs text-primary font-label mt-1">
+                                    {chapter.annotations.length} annotations
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteChapter(chapter.id)}
+                            className="p-3 text-outline hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Delete chapter"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
                         </div>
-                      </button>
+                        
+                        {/* Add Chapter After */}
+                        <button
+                          onClick={() => handleAddChapter(index + 1)}
+                          className="w-full py-2 border-2 border-dashed border-outline-variant/50 rounded-xl text-outline/50 font-label text-sm hover:border-primary hover:text-primary transition-colors mt-2"
+                        >
+                          + Add Chapter Here
+                        </button>
+                      </div>
                     ))}
                     
                     {chapters.length === 0 && (
                       <div className="text-center py-16 bg-surface-container-low rounded-xl border border-dashed border-outline-variant">
                         <FileText className="w-12 h-12 text-outline/50 mx-auto mb-4" />
-                        <p className="text-outline font-label">No chapters yet. Upload a markdown file to get started.</p>
+                        <p className="text-outline font-label">No chapters yet. Upload a markdown file or add a chapter to get started.</p>
                       </div>
                     )}
                   </div>
@@ -470,6 +545,51 @@ export default function AdminDashboard() {
         )}
       </main>
     </div>
+  );
+}
+
+// Editable Title Component
+function EditableTitle({ title, onSave }: { title: string; onSave: (newTitle: string) => void }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(title);
+
+  const handleSave = () => {
+    if (editValue.trim() && editValue !== title) {
+      onSave(editValue.trim());
+    }
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleSave();
+    if (e.key === 'Escape') {
+      setEditValue(title);
+      setIsEditing(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <input
+        type="text"
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={handleKeyDown}
+        autoFocus
+        className="font-headline font-bold text-lg text-on-surface bg-surface-container-low border border-primary rounded px-2 py-1 w-full"
+      />
+    );
+  }
+
+  return (
+    <h3 
+      onClick={() => setIsEditing(true)}
+      className="font-headline font-bold text-lg text-on-surface cursor-pointer hover:text-primary transition-colors"
+      title="Click to edit"
+    >
+      {title}
+    </h3>
   );
 }
 
