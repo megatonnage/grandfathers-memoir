@@ -229,7 +229,7 @@ export default function AnnotationManager({ chapters }: AnnotationManagerProps) 
     if (!confirm(`Delete ${selectedAnnotations.size} annotations?`)) return;
     
     // Process each selected annotation
-    for (const annId of selectedAnnotations) {
+    for (const annId of Array.from(selectedAnnotations)) {
       const flatAnn = allAnnotations.find(a => a.id === annId);
       if (flatAnn) await handleDelete(flatAnn);
     }
