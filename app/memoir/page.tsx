@@ -244,6 +244,21 @@ export default function Home() {
           icon={<Book className="w-5 h-5" />}
           label="Memoir"
         />
+        <a 
+          href="/ba-ngoai"
+          className="flex flex-col items-center justify-center gap-1 px-4 py-1 transition-all duration-200 text-outline hover:text-[#E59368]"
+        >
+          <Heart className="w-5 h-5" />
+          <span className="font-label text-[10px] font-bold uppercase tracking-widest opacity-60">
+            Bà Ngoại
+          </span>
+        </a>
+        <NavButton 
+          active={currentView === 'gallery'} 
+          onClick={() => setCurrentView('gallery')}
+          icon={<ImageIcon className="w-5 h-5" />}
+          label="Gallery"
+        />
         <NavButton 
           active={isChorusOpen} 
           onClick={() => {
@@ -270,21 +285,6 @@ export default function Home() {
           icon={<History className="w-5 h-5" />}
           label="Timeline"
         />
-        <NavButton 
-          active={currentView === 'gallery'} 
-          onClick={() => setCurrentView('gallery')}
-          icon={<ImageIcon className="w-5 h-5" />}
-          label="Gallery"
-        />
-        <a 
-          href="/ba-ngoai"
-          className="flex flex-col items-center justify-center gap-1 px-4 py-1 transition-all duration-200 text-outline hover:text-[#E59368]"
-        >
-          <Heart className="w-5 h-5" />
-          <span className="font-label text-[10px] font-bold uppercase tracking-widest opacity-60">
-            Bà Ngoại
-          </span>
-        </a>
       </nav>
       )}
     </div>
