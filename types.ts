@@ -42,3 +42,28 @@ export interface SpeculativeResponse {
   content: string;
   targetChapterId: string;
 }
+
+export type UserRole = 'admin' | 'moderator' | 'user';
+
+export interface User {
+  id: string;
+  email: string;
+  displayName: string;
+  role: UserRole;
+  createdAt: string;
+  lastLoginAt?: string;
+  photoURL?: string;
+  invitedBy?: string;
+  inviteStatus?: 'pending' | 'accepted';
+}
+
+export interface Invite {
+  id: string;
+  email: string;
+  role: UserRole;
+  invitedBy: string;
+  invitedAt: string;
+  status: 'pending' | 'accepted' | 'expired';
+  token: string;
+  expiresAt: string;
+}

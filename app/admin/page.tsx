@@ -2,23 +2,36 @@
 
 import React, { useState, useEffect } from 'react';
 import { useState as useStateLocal } from 'react';
-import { Upload, MessageSquare, Settings, FileText, Image as ImageIcon, Users, BookOpen, Check, X, Heart, Trash2, Radio, History, Layers, Edit3 } from 'lucide-react';
+import { Upload, MessageSquare, Settings, FileText, Image as ImageIcon, Users, BookOpen, Check, X, Heart, Trash2, Radio, History, Layers, Edit3, LogOut, User, Mail } from 'lucide-react';
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { useAuth } from '../../lib/AuthContext';
 import { Chapter, Annotation, GalleryImage } from '../../types';
 import { cn } from '../../lib/utils';
 import BilingualEditor from '../../components/BilingualEditor';
 import Gallery from '../../components/Gallery';
 import AnnotationManager from '../../components/AnnotationManager';
+import LoginModal from '../../components/LoginModal';
+import InviteManager from '../../components/InviteManager';
+import ProtectedRoute from '../../components/ProtectedRoute';
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'chapters' | 'gallery' | 'moderation' | 'annotations' | 'ba-ngoai' | 'experiences' | 'settings'>('chapters');
+  const { currentUser, userProfile, isAuthenticated, isAdmin, logout } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'chapters' | 'gallery' | 'moderation' | 'annotations' | 'ba-ngoai' | 'experiences' | 'invites' | 'settings'>('chapters');
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [baNgoaiImages, setBaNgoaiImages] = useState<GalleryImage[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Show login modal if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated && !showLoginModal) {
+      setShowLoginModal(true);
+    }
+  }, [isAuthenticated, showLoginModal]);
 
   useEffect(() => {
     const q = query(collection(db, 'chapters'), orderBy('order', 'asc'));
@@ -324,6 +337,14 @@ export default function AdminDashboard() {
             icon={<Layers className="w-5 h-5" />}
             label="Experiences"
           />
+          {isAdmin && (
+            <TabButton 
+              active={activeTab === 'invites'} 
+              onClick={() => { setActiveTab('invites'); setSelectedChapter(null); }}
+              icon={<Mail className="w-5 h-5" />}
+              label="Invites"
+            />
+          )}
           <TabButton 
             active={activeTab === 'settings'} 
             onClick={() => { setActiveTab('settings'); setSelectedChapter(null); }}
@@ -331,6 +352,38 @@ export default function AdminDashboard() {
             label="Family Settings"
           />
         </div>
+
+        {/* User Info */}
+        {isAuthenticated && userProfile && (
+          <div className="mt-auto pt-6 border-t border-outline-variant">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-label font-medium text-on-surface truncate">{userProfile.displayName}</p>
+                <p className="text-xs text-outline truncate">{userProfile.email}</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className={cn(
+                "text-xs px-2 py-1 rounded-full font-label uppercase",
+                userProfile.role === 'admin' ? "bg-red-100 text-red-700" :
+                userProfile.role === 'moderator' ? "bg-blue-100 text-blue-700" :
+                "bg-gray-100 text-gray-700"
+              )}>
+                {userProfile.role}
+              </span>
+              <button
+                onClick={logout}
+                className="p-2 text-outline hover:text-red-600 transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Main Content */}
@@ -670,6 +723,15 @@ export default function AdminDashboard() {
           <ExperiencesAdmin chapters={chapters} galleryImages={galleryImages} />
         )}
 
+        {activeTab === 'invites' && isAdmin && currentUser && (
+          <div className="p-8 overflow-y-auto h-full">
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-3xl font-headline text-on-surface mb-8">Manage Invitations</h2>
+              <InviteManager currentUserId={currentUser.uid} />
+            </div>
+          </div>
+        )}
+
         {activeTab === 'settings' && (
           <div className="p-8 overflow-y-auto h-full">
             <div className="max-w-4xl mx-auto">
@@ -709,6 +771,18 @@ export default function AdminDashboard() {
           </div>
         )}
       </main>
+
+      {/* Login Modal */}
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => {
+          setShowLoginModal(false);
+          if (!isAuthenticated) {
+            // Redirect to home if not authenticated
+            window.location.href = '/';
+          }
+        }} 
+      />
     </div>
   );
 }
