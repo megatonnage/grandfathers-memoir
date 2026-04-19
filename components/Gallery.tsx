@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { collection, query, orderBy, onSnapshot, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../lib/firebase';
 import { GalleryImage, Annotation } from '../types';
 import { cn } from '../lib/utils';
-import { Upload, X, MessageSquare, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Upload, X, MessageSquare, Trash2, ChevronLeft, ChevronRight, Copy, Check } from 'lucide-react';
 
 interface GalleryProps {
   onImageClick?: (image: GalleryImage) => void;
@@ -27,36 +28,62 @@ export default function Gallery({ onImageClick }: GalleryProps) {
     return () => unsubscribe();
   }, []);
 
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
+    setUploadProgress(0);
+    
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      // Upload to Firebase Storage directly from client
+      const fileRef = ref(storage, `gallery/${Date.now()}_${file.name}`);
+      const uploadTask = uploadBytesResumable(fileRef, file);
 
-      const res = await fetch('/api/admin/image', { method: 'POST', body: formData });
-      const data = await res.json();
-
-      if (data.success) {
-        await addDoc(collection(db, 'gallery'), {
-          url: data.downloadURL,
-          caption: newCaption || file.name,
-          uploadedAt: new Date().toISOString(),
-          uploadedBy: 'Admin',
-          annotations: []
-        });
-        setNewCaption('');
-      } else {
-        alert('Upload failed: ' + data.error);
-      }
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(progress);
+        },
+        (error) => {
+          console.error('Upload failed:', error);
+          alert('Upload failed: ' + error.message);
+          setIsUploading(false);
+        },
+        async () => {
+          // Upload complete, get download URL
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          
+          // Save to Firestore
+          await addDoc(collection(db, 'gallery'), {
+            url: downloadURL,
+            caption: newCaption || file.name,
+            uploadedAt: new Date().toISOString(),
+            uploadedBy: 'Admin',
+            annotations: []
+          });
+          
+          setNewCaption('');
+          setIsUploading(false);
+          setUploadProgress(0);
+        }
+      );
     } catch (err) {
       console.error(err);
-      alert('Upload request failed.');
-    } finally {
+      alert('Upload request failed: ' + (err as Error).message);
       setIsUploading(false);
     }
+  };
+
+  const copyMarkdown = (image: GalleryImage) => {
+    const markdown = `![${image.caption}](${image.url})`;
+    navigator.clipboard.writeText(markdown);
+    setCopiedId(image.id);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   const handleDelete = async (id: string) => {
@@ -125,20 +152,30 @@ export default function Gallery({ onImageClick }: GalleryProps) {
               onChange={(e) => setNewCaption(e.target.value)}
               className="px-3 py-2 border border-outline-variant rounded-md text-sm font-label bg-surface"
             />
-            <label className={cn(
-              "flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-md font-label cursor-pointer hover:bg-primary/90 transition-colors",
-              isUploading && "opacity-50 cursor-not-allowed"
-            )}>
-              <Upload className="w-4 h-4" />
-              {isUploading ? 'Uploading...' : 'Upload Image'}
-              <input 
-                type="file" 
-                accept="image/*" 
-                className="hidden" 
-                onChange={handleUpload}
-                disabled={isUploading}
-              />
-            </label>
+            <div className="flex flex-col items-end gap-2">
+              {isUploading && (
+                <div className="w-48 h-2 bg-surface-container rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              )}
+              <label className={cn(
+                "flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-md font-label cursor-pointer hover:bg-primary/90 transition-colors",
+                isUploading && "opacity-50 cursor-not-allowed"
+              )}>
+                <Upload className="w-4 h-4" />
+                {isUploading ? `${Math.round(uploadProgress)}%` : 'Upload Image'}
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={handleUpload}
+                  disabled={isUploading}
+                />
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -165,15 +202,28 @@ export default function Gallery({ onImageClick }: GalleryProps) {
                   <MessageSquare className="w-3 h-3 inline mr-1" />
                   {image.annotations?.length || 0}
                 </span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(image.id);
-                  }}
-                  className="p-1 text-outline hover:text-tertiary opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyMarkdown(image);
+                    }}
+                    className="p-1 text-outline hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Copy markdown"
+                  >
+                    {copiedId === image.id ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(image.id);
+                    }}
+                    className="p-1 text-outline hover:text-tertiary opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Delete image"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -229,7 +279,16 @@ export default function Gallery({ onImageClick }: GalleryProps) {
 
             {/* Annotations Panel */}
             <div className="w-full md:w-80 bg-surface rounded-lg p-4 flex flex-col max-h-[70vh]">
-              <h3 className="font-headline font-bold text-lg mb-2">{selectedImage.caption}</h3>
+              <div className="flex items-start justify-between mb-2">
+                <h3 className="font-headline font-bold text-lg">{selectedImage.caption}</h3>
+                <button
+                  onClick={() => copyMarkdown(selectedImage)}
+                  className="p-2 text-outline hover:text-primary rounded-md hover:bg-surface-container transition-colors"
+                  title="Copy markdown"
+                >
+                  {copiedId === selectedImage.id ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                </button>
+              </div>
               <p className="text-xs text-outline font-label mb-4">
                 Uploaded {new Date(selectedImage.uploadedAt).toLocaleDateString()}
               </p>
