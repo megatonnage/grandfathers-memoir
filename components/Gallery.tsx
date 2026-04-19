@@ -10,9 +10,10 @@ import { Upload, X, MessageSquare, Trash2, ChevronLeft, ChevronRight, Copy, Chec
 
 interface GalleryProps {
   onImageClick?: (image: GalleryImage) => void;
+  isAdmin?: boolean;
 }
 
-export default function Gallery({ onImageClick }: GalleryProps) {
+export default function Gallery({ onImageClick, isAdmin = false }: GalleryProps) {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -213,16 +214,18 @@ export default function Gallery({ onImageClick }: GalleryProps) {
                   >
                     {copiedId === image.id ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
                   </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(image.id);
-                    }}
-                    className="p-1 text-outline hover:text-tertiary opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Delete image"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(image.id);
+                      }}
+                      className="p-1 text-outline hover:text-tertiary opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Delete image (admin only)"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

@@ -222,7 +222,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {activeTab === 'gallery' && <Gallery />}
+        {activeTab === 'gallery' && <Gallery isAdmin={true} />}
 
         {activeTab === 'moderation' && (
           <div className="p-8 overflow-y-auto h-full">
