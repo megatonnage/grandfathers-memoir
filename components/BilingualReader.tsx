@@ -61,7 +61,7 @@ export default function BilingualReader({ chapter, onAnnotate, activeAnnotationI
         <div className="max-w-xl mx-auto space-y-8">
           <div className="inline-block border-b-2 border-primary/40 pb-1 mb-6">
             <span className="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface/60 font-semibold">
-              Bản Gốc • {chapter.year}
+              Bản Gốc • Vietnamese
             </span>
           </div>
           <h2 className="text-3xl font-headline font-bold text-on-surface leading-tight">
@@ -126,7 +126,7 @@ export default function BilingualReader({ chapter, onAnnotate, activeAnnotationI
         <div className="max-w-xl mx-auto space-y-8">
           <div className="inline-block border-b-2 border-primary/20 pb-1 mb-6">
             <span className="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface/50 font-semibold">
-              Translation • Legacy
+              Translation • English
             </span>
           </div>
           <h2 className="text-3xl font-headline font-light italic text-primary/80 leading-tight">
