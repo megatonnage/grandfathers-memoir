@@ -327,7 +327,7 @@ export default function AdminDashboard() {
           <TabButton 
             active={activeTab === 'settings'} 
             onClick={() => { setActiveTab('settings'); setSelectedChapter(null); }}
-            icon={<Settings className="w-5 h-5" />
+            icon={<Settings className="w-5 h-5" />}
             label="Family Settings"
           />
         </div>
