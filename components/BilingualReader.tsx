@@ -252,5 +252,6 @@ export default function BilingualReader({ chapter, chapters, onAnnotate, onChapt
         </div>
       </div>
     </div>
+    </div>
   );
 }
