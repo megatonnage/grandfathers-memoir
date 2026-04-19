@@ -5,7 +5,7 @@ import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc } from '
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../lib/firebase';
 import { GalleryImage, Annotation } from '../../types';
-import { MessageSquare, X, ChevronLeft, ChevronRight, Upload, Layers } from 'lucide-react';
+import { MessageSquare, X, ChevronLeft, ChevronRight, Upload, Layers, Book, Users, Radio, History, Image as ImageIcon, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { cn } from '../../lib/utils';
@@ -301,6 +301,64 @@ export default function BaNgoaiPage() {
           </div>
         </div>
       )}
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-8 bg-surface/95 backdrop-blur-md border-t border-outline-variant">
+        <a 
+          href="/memoir"
+          className="flex flex-col items-center justify-center gap-1 px-4 py-1 transition-all duration-200 text-outline hover:text-primary"
+        >
+          <Book className="w-5 h-5" />
+          <span className="font-label text-[10px] font-bold uppercase tracking-widest opacity-60">
+            Memoir
+          </span>
+        </a>
+        <a 
+          href="/memoir?chorus=true"
+          className="flex flex-col items-center justify-center gap-1 px-4 py-1 transition-all duration-200 text-outline hover:text-primary"
+        >
+          <Users className="w-5 h-5" />
+          <span className="font-label text-[10px] font-bold uppercase tracking-widest opacity-60">
+            Chorus
+          </span>
+        </a>
+        <a 
+          href="/memoir?view=voices"
+          className="flex flex-col items-center justify-center gap-1 px-4 py-1 transition-all duration-200 text-outline hover:text-primary"
+        >
+          <Radio className="w-5 h-5" />
+          <span className="font-label text-[10px] font-bold uppercase tracking-widest opacity-60">
+            Voices
+          </span>
+        </a>
+        <a 
+          href="/memoir?view=timeline"
+          className="flex flex-col items-center justify-center gap-1 px-4 py-1 transition-all duration-200 text-outline hover:text-primary"
+        >
+          <History className="w-5 h-5" />
+          <span className="font-label text-[10px] font-bold uppercase tracking-widest opacity-60">
+            Timeline
+          </span>
+        </a>
+        <a 
+          href="/memoir?view=gallery"
+          className="flex flex-col items-center justify-center gap-1 px-4 py-1 transition-all duration-200 text-outline hover:text-primary"
+        >
+          <ImageIcon className="w-5 h-5" />
+          <span className="font-label text-[10px] font-bold uppercase tracking-widest opacity-60">
+            Gallery
+          </span>
+        </a>
+        <a 
+          href="/ba-ngoai"
+          className="flex flex-col items-center justify-center gap-1 px-4 py-1 transition-all duration-200 text-primary"
+        >
+          <Heart className="w-5 h-5" />
+          <span className="font-label text-[10px] font-bold uppercase tracking-widest opacity-60">
+            Bà Ngoại
+          </span>
+        </a>
+      </nav>
     </div>
   );
 }
