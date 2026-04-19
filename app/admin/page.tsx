@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Upload, MessageSquare, Settings, FileText, Image as ImageIcon, Users, BookOpen } from 'lucide-react';
+import { Upload, MessageSquare, Settings, FileText, Image as ImageIcon, Users, BookOpen, Check, X } from 'lucide-react';
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Chapter } from '../../types';
+import { Chapter, Annotation } from '../../types';
 import { cn } from '../../lib/utils';
 import BilingualEditor from '../../components/BilingualEditor';
 import Gallery from '../../components/Gallery';
@@ -78,22 +78,91 @@ export default function AdminDashboard() {
     }
   };
 
-  // Calculate pending moderations
-  const getPendingCount = () => {
-    let count = 0;
+  // Get all pending annotations with their context
+  const getPendingAnnotations = () => {
+    const pending: Array<{
+      annotation: Annotation;
+      chapterId: string;
+      chapterTitle: string;
+      parentId?: string;
+    }> = [];
+    
     chapters.forEach(ch => {
-      const checkAnnotations = (anns: any[]) => {
+      const findPending = (anns: Annotation[], parentId?: string) => {
         anns.forEach(a => {
-          if (a.status === 'pending') count++;
-          if (a.replies) checkAnnotations(a.replies);
+          if (a.status === 'pending') {
+            pending.push({
+              annotation: a,
+              chapterId: ch.id,
+              chapterTitle: ch.title,
+              parentId
+            });
+          }
+          if (a.replies) {
+            findPending(a.replies, a.id);
+          }
         });
       };
-      if (ch.annotations) checkAnnotations(ch.annotations);
+      if (ch.annotations) findPending(ch.annotations);
     });
-    return count;
+    
+    return pending;
   };
 
-  const pendingCount = getPendingCount();
+  const pendingAnnotations = getPendingAnnotations();
+  const pendingCount = pendingAnnotations.length;
+
+  const handleModerate = async (chapterId: string, annotationId: string, action: 'approve' | 'reject', parentId?: string) => {
+    const chapter = chapters.find(c => c.id === chapterId);
+    if (!chapter) return;
+
+    const processTree = (annotations: Annotation[]): Annotation[] => {
+      return annotations.filter(a => !(action === 'reject' && a.id === annotationId)).map(a => {
+        if (a.id === annotationId && action === 'approve') {
+          return { ...a, status: 'approved' as const };
+        }
+        if (a.replies) {
+          return { ...a, replies: processTree(a.replies) };
+        }
+        return a;
+      });
+    };
+
+    // If it's a reply, find the parent and update its replies
+    if (parentId) {
+      const updateReplies = (annotations: Annotation[]): Annotation[] => {
+        return annotations.map(a => {
+          if (a.id === parentId && a.replies) {
+            return {
+              ...a,
+              replies: processTree(a.replies)
+            };
+          }
+          if (a.replies) {
+            return { ...a, replies: updateReplies(a.replies) };
+          }
+          return a;
+        });
+      };
+      
+      const newAnnotations = updateReplies(chapter.annotations || []);
+      try {
+        await updateDoc(doc(db, 'chapters', chapterId), { annotations: newAnnotations });
+      } catch (e) {
+        console.error(e);
+        alert('Failed to update moderation status.');
+      }
+    } else {
+      // Top-level annotation
+      const newAnnotations = processTree(chapter.annotations || []);
+      try {
+        await updateDoc(doc(db, 'chapters', chapterId), { annotations: newAnnotations });
+      } catch (e) {
+        console.error(e);
+        alert('Failed to update moderation status.');
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-surface flex flex-col md:flex-row">
@@ -235,7 +304,54 @@ export default function AdminDashboard() {
                   <p className="text-outline font-label">No pending annotations. All caught up!</p>
                 </div>
               ) : (
-                <p className="text-outline font-label mb-4">{pendingCount} pending annotations</p>
+                <div className="space-y-4">
+                  <p className="text-outline font-label mb-4">{pendingCount} pending annotation{pendingCount !== 1 ? 's' : ''}</p>
+                  
+                  {pendingAnnotations.map(({ annotation, chapterId, chapterTitle, parentId }) => (
+                    <div key={annotation.id} className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <p className="text-sm text-outline font-label mb-1">
+                            On: <span className="text-on-surface font-medium">{chapterTitle}</span>
+                            {parentId && <span className="text-tertiary"> (reply)</span>}
+                          </p>
+                          <p className="text-xs text-outline font-label">
+                            By: {annotation.author} • {new Date(annotation.timestamp).toLocaleString()}
+                          </p>
+                          {annotation.historicalDate && (
+                            <p className="text-xs text-primary font-label mt-1">
+                              Historical date: {annotation.historicalDate}
+                            </p>
+                          )}
+                        </div>
+                        <span className="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-label rounded-full">
+                          Pending
+                        </span>
+                      </div>
+                      
+                      <div className="bg-surface-container-low rounded-lg p-4 mb-4">
+                        <p className="text-on-surface font-body">{annotation.content}</p>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => handleModerate(chapterId, annotation.id, 'approve', parentId)}
+                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md font-label text-sm hover:bg-green-700 transition-colors"
+                        >
+                          <Check className="w-4 h-4" />
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleModerate(chapterId, annotation.id, 'reject', parentId)}
+                          className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-md font-label text-sm hover:bg-red-200 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
