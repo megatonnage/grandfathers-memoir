@@ -136,7 +136,7 @@ export default function BaNgoaiPage() {
       <section className="pt-20 pb-4 px-6">
         <div className="max-w-3xl mx-auto text-center">
           <p className="font-body text-lg text-outline italic leading-relaxed">
-            "My grandmother, as far as I know, did not read nor write. But her presence in our lives was as great as my grandfather's."
+            "My grandmother, as far as I know, did not read nor write.<br /><span className="block mt-1">But her presence in our lives was as great as my grandfather's."</span>
           </p>
         </div>
       </section>
@@ -405,6 +405,24 @@ export default function BaNgoaiPage() {
             Memoir
           </span>
         </a>
+        <a 
+          href="/ba-ngoai"
+          className="flex flex-col items-center justify-center gap-1 px-4 py-1 transition-all duration-200 text-primary"
+        >
+          <Heart className="w-5 h-5" />
+          <span className="font-label text-[10px] font-bold uppercase tracking-widest opacity-60">
+            Bà Ngoại
+          </span>
+        </a>
+        <a 
+          href="/memoir?view=gallery"
+          className="flex flex-col items-center justify-center gap-1 px-4 py-1 transition-all duration-200 text-outline hover:text-primary"
+        >
+          <ImageIcon className="w-5 h-5" />
+          <span className="font-label text-[10px] font-bold uppercase tracking-widest opacity-60">
+            Gallery
+          </span>
+        </a>
         <button 
           onClick={() => setIsChorusOpen(!isChorusOpen)}
           className={cn(
@@ -433,24 +451,6 @@ export default function BaNgoaiPage() {
           <History className="w-5 h-5" />
           <span className="font-label text-[10px] font-bold uppercase tracking-widest opacity-60">
             Timeline
-          </span>
-        </a>
-        <a 
-          href="/memoir?view=gallery"
-          className="flex flex-col items-center justify-center gap-1 px-4 py-1 transition-all duration-200 text-outline hover:text-primary"
-        >
-          <ImageIcon className="w-5 h-5" />
-          <span className="font-label text-[10px] font-bold uppercase tracking-widest opacity-60">
-            Gallery
-          </span>
-        </a>
-        <a 
-          href="/ba-ngoai"
-          className="flex flex-col items-center justify-center gap-1 px-4 py-1 transition-all duration-200 text-primary"
-        >
-          <Heart className="w-5 h-5" />
-          <span className="font-label text-[10px] font-bold uppercase tracking-widest opacity-60">
-            Bà Ngoại
           </span>
         </a>
       </nav>
