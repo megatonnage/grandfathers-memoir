@@ -8,9 +8,10 @@ import { Chapter, Annotation } from '../../types';
 import { cn } from '../../lib/utils';
 import BilingualEditor from '../../components/BilingualEditor';
 import Gallery from '../../components/Gallery';
+import AnnotationManager from '../../components/AnnotationManager';
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'chapters' | 'gallery' | 'moderation' | 'settings'>('chapters');
+  const [activeTab, setActiveTab] = useState<'chapters' | 'gallery' | 'moderation' | 'annotations' | 'settings'>('chapters');
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
@@ -194,6 +195,12 @@ export default function AdminDashboard() {
             badge={pendingCount > 0 ? pendingCount : undefined}
           />
           <TabButton 
+            active={activeTab === 'annotations'} 
+            onClick={() => { setActiveTab('annotations'); setSelectedChapter(null); }}
+            icon={<BookOpen className="w-5 h-5" />}
+            label="All Annotations"
+          />
+          <TabButton 
             active={activeTab === 'settings'} 
             onClick={() => { setActiveTab('settings'); setSelectedChapter(null); }}
             icon={<Settings className="w-5 h-5" />}
@@ -355,6 +362,10 @@ export default function AdminDashboard() {
               )}
             </div>
           </div>
+        )}
+
+        {activeTab === 'annotations' && (
+          <AnnotationManager chapters={chapters} />
         )}
 
         {activeTab === 'settings' && (
