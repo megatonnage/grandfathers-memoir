@@ -427,7 +427,7 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === 'annotations' && (
-          <AnnotationManager chapters={chapters} />
+          <AnnotationManager chapters={chapters} galleryImages={galleryImages} />
         )}
 
         {activeTab === 'settings' && (

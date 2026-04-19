@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { collection, doc, updateDoc, deleteDoc, query, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Chapter, Annotation } from '../types';
+import { Chapter, Annotation, GalleryImage } from '../types';
 import { cn } from '../lib/utils';
 import { 
   Trash2, 
@@ -19,7 +19,8 @@ import {
   Move,
   ChevronDown,
   ChevronUp,
-  Search
+  Search,
+  Image as ImageIcon
 } from 'lucide-react';
 
 type SortField = 'date' | 'status' | 'author' | 'chapter';
@@ -35,13 +36,17 @@ interface FlatAnnotation {
   parentId?: string;
   depth: number;
   path: string[];
+  isGallery?: boolean;
+  galleryImageId?: string;
+  galleryImageCaption?: string;
 }
 
 interface AnnotationManagerProps {
   chapters: Chapter[];
+  galleryImages?: GalleryImage[];
 }
 
-export default function AnnotationManager({ chapters }: AnnotationManagerProps) {
+export default function AnnotationManager({ chapters, galleryImages = [] }: AnnotationManagerProps) {
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -51,10 +56,11 @@ export default function AnnotationManager({ chapters }: AnnotationManagerProps) 
   const [isBulkMode, setIsBulkMode] = useState(false);
   const [moveTargetChapter, setMoveTargetChapter] = useState<string | null>(null);
 
-  // Flatten all annotations from all chapters
+  // Flatten all annotations from all chapters and gallery images
   const allAnnotations = useMemo(() => {
     const flat: FlatAnnotation[] = [];
     
+    // Chapter annotations
     chapters.forEach(chapter => {
       const flatten = (anns: Annotation[], parentId?: string, depth = 0, path: string[] = []) => {
         anns.forEach((ann, index) => {
@@ -80,8 +86,28 @@ export default function AnnotationManager({ chapters }: AnnotationManagerProps) 
       }
     });
     
+    // Gallery image annotations
+    galleryImages.forEach(image => {
+      if (image.annotations) {
+        image.annotations.forEach((ann, index) => {
+          flat.push({
+            id: ann.id,
+            annotation: ann,
+            chapterId: 'gallery',
+            chapterTitle: 'Gallery',
+            chapterYear: '',
+            depth: 0,
+            path: [`gallery-${index}`],
+            isGallery: true,
+            galleryImageId: image.id,
+            galleryImageCaption: image.caption
+          });
+        });
+      }
+    });
+    
     return flat;
-  }, [chapters]);
+  }, [chapters, galleryImages]);
 
   // Filter and sort annotations
   const filteredAnnotations = useMemo(() => {
@@ -137,6 +163,28 @@ export default function AnnotationManager({ chapters }: AnnotationManagerProps) 
   };
 
   const handleStatusChange = async (flatAnn: FlatAnnotation, newStatus: 'approved' | 'rejected' | 'pending') => {
+    // Handle gallery image annotations
+    if (flatAnn.isGallery && flatAnn.galleryImageId) {
+      const image = galleryImages.find(img => img.id === flatAnn.galleryImageId);
+      if (!image) return;
+
+      const newAnnotations = image.annotations?.map(a => {
+        if (a.id === flatAnn.id) {
+          return { ...a, status: newStatus };
+        }
+        return a;
+      }) || [];
+
+      try {
+        await updateDoc(doc(db, 'gallery', flatAnn.galleryImageId), { annotations: newAnnotations });
+      } catch (e) {
+        console.error('Failed to update status:', e);
+        alert('Failed to update annotation status.');
+      }
+      return;
+    }
+
+    // Handle chapter annotations
     const chapter = chapters.find(c => c.id === flatAnn.chapterId);
     if (!chapter) return;
 
@@ -165,6 +213,23 @@ export default function AnnotationManager({ chapters }: AnnotationManagerProps) 
   const handleDelete = async (flatAnn: FlatAnnotation) => {
     if (!confirm('Are you sure you want to delete this annotation?')) return;
     
+    // Handle gallery image annotations
+    if (flatAnn.isGallery && flatAnn.galleryImageId) {
+      const image = galleryImages.find(img => img.id === flatAnn.galleryImageId);
+      if (!image) return;
+
+      const newAnnotations = image.annotations?.filter(a => a.id !== flatAnn.id) || [];
+      
+      try {
+        await updateDoc(doc(db, 'gallery', flatAnn.galleryImageId), { annotations: newAnnotations });
+      } catch (e) {
+        console.error('Failed to delete:', e);
+        alert('Failed to delete annotation.');
+      }
+      return;
+    }
+    
+    // Handle chapter annotations
     const chapter = chapters.find(c => c.id === flatAnn.chapterId);
     if (!chapter) return;
 
@@ -400,10 +465,23 @@ export default function AnnotationManager({ chapters }: AnnotationManagerProps) 
                     </div>
                   )}
                   
-                  {/* Chapter */}
+                  {/* Chapter / Gallery */}
                   <div className="col-span-3">
-                    <p className="font-label font-medium text-on-surface text-sm">{flatAnn.chapterTitle}</p>
-                    <p className="text-xs text-outline">{flatAnn.chapterYear}</p>
+                    <p className="font-label font-medium text-on-surface text-sm">
+                      {flatAnn.isGallery ? (
+                        <span className="flex items-center gap-1">
+                          <ImageIcon className="w-3 h-3 text-primary" />
+                          Gallery
+                        </span>
+                      ) : (
+                        flatAnn.chapterTitle
+                      )}
+                    </p>
+                    <p className="text-xs text-outline">
+                      {flatAnn.isGallery && flatAnn.galleryImageCaption 
+                        ? `"${flatAnn.galleryImageCaption}"` 
+                        : flatAnn.chapterYear}
+                    </p>
                     {flatAnn.depth > 0 && (
                       <p className="text-xs text-tertiary mt-1">Reply (depth {flatAnn.depth})</p>
                     )}
@@ -452,13 +530,15 @@ export default function AnnotationManager({ chapters }: AnnotationManagerProps) 
                     >
                       {expandedId === flatAnn.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </button>
-                    <button
-                      onClick={() => setMoveTargetChapter(moveTargetChapter === flatAnn.id ? null : flatAnn.id)}
-                      className="p-2 text-outline hover:text-primary rounded-md"
-                      title="Move to chapter"
-                    >
-                      <Move className="w-4 h-4" />
-                    </button>
+                    {!flatAnn.isGallery && (
+                      <button
+                        onClick={() => setMoveTargetChapter(moveTargetChapter === flatAnn.id ? null : flatAnn.id)}
+                        className="p-2 text-outline hover:text-primary rounded-md"
+                        title="Move to chapter"
+                      >
+                        <Move className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDelete(flatAnn)}
                       className="p-2 text-outline hover:text-red-600 rounded-md"
