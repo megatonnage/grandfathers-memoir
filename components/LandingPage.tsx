@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
-import Image from 'next/image';
+// Using regular img tag for external Firebase image
 
 interface LandingPageProps {
   onEnter: () => void;
@@ -12,18 +12,13 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
     <div className="fixed inset-0 z-[100] bg-[#0B0E0C] text-[#F1F3F2] flex flex-col items-center justify-center overflow-hidden">
       
       {/* Hero Image Background */}
-      <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
-        <Image
-          src="/images/hero-family.jpg"
+      <div className="absolute inset-0 w-full h-full z-0">
+        <img
+          src="https://firebasestorage.googleapis.com/v0/b/ongba-19991.firebasestorage.app/o/gallery%2F1776620011033_First_Family_Pic.jpeg?alt=media&token=86753867-98b2-4f1b-a676-6b6fb0ef262e"
           alt="Family Gathering"
-          fill
-          className="object-cover object-center opacity-30 mix-blend-luminosity"
-          priority
+          className="w-full h-full object-cover"
+          style={{ opacity: 0.6 }}
         />
-        {/* Vignette Overlay (Dark fades from edges) */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,#0B0E0C_80%)]" />
-        {/* Grounding bottom fade */}
-        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#0B0E0C] to-transparent" />
       </div>
 
       {/* Background ambient gradients */}

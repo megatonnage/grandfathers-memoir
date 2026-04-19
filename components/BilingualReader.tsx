@@ -245,10 +245,6 @@ export default function BilingualReader({ chapter, chapters, onAnnotate, onChapt
               );
             })}
           </div>
-
-          <div className="h-48 my-12 bg-surface rounded-sm flex items-center justify-center overflow-hidden border border-outline-variant shadow-inner opacity-60">
-             <div className="text-primary/20 text-6xl">❧</div>
-          </div>
         </div>
       </div>
     </div>
