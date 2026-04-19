@@ -48,3 +48,12 @@
   }
 }
 
+/* Landing page animation fallback - ensure content is visible even if JS fails */
+@media (prefers-reduced-motion: reduce) {
+  .landing-title,
+  .landing-cta {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
