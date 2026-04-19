@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 // Header removed - using Silt & Stone logo instead
@@ -17,12 +18,30 @@ import { Chapter, Annotation, GalleryImage } from '../../types';
 type View = 'landing' | 'memoir' | 'chorus' | 'voices' | 'timeline' | 'gallery';
 
 export default function Home() {
+  const searchParams = useSearchParams();
   const [currentView, setCurrentView] = useState<View>('memoir');
   const [isChorusOpen, setIsChorusOpen] = useState(false);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [activeTargetId, setActiveTargetId] = useState<string | null>(null);
+
+  // Handle query parameters for view routing
+  useEffect(() => {
+    const view = searchParams.get('view');
+    const chorus = searchParams.get('chorus');
+    
+    if (view === 'gallery') {
+      setCurrentView('gallery');
+    } else if (view === 'voices') {
+      setCurrentView('voices');
+    } else if (view === 'timeline') {
+      setCurrentView('timeline');
+    } else if (chorus === 'true') {
+      setCurrentView('memoir');
+      setIsChorusOpen(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const q = query(collection(db, 'chapters'), orderBy('order', 'asc'));
