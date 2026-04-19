@@ -165,8 +165,13 @@ export default function Home() {
             )}
             {currentView === 'memoir' && (
           <BilingualReader 
-            chapter={currentChapter} 
+            chapter={currentChapter}
+            chapters={chapters}
             onAnnotate={handleAnnotate}
+            onChapterChange={(chapterId) => {
+              const idx = chapters.findIndex(c => c.id === chapterId);
+              if (idx !== -1) setCurrentChapterIndex(idx);
+            }}
             activeAnnotationId={activeTargetId || undefined}
           />
         )}

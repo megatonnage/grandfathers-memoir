@@ -2,11 +2,13 @@ import React, { useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Chapter } from '../types';
 import { cn } from '../lib/utils';
-import { MessageSquarePlus } from 'lucide-react';
+import { MessageSquarePlus, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 
 interface BilingualReaderProps {
   chapter: Chapter;
+  chapters: Chapter[];
   onAnnotate: (targetId: string) => void;
+  onChapterChange: (chapterId: string) => void;
   activeAnnotationId?: string;
 }
 
@@ -29,7 +31,8 @@ const markdownComponents = {
   )
 };
 
-export default function BilingualReader({ chapter, onAnnotate, activeAnnotationId }: BilingualReaderProps) {
+export default function BilingualReader({ chapter, chapters, onAnnotate, onChapterChange, activeAnnotationId }: BilingualReaderProps) {
+  const [showChapterNav, setShowChapterNav] = useState(false);
   const leftRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
   const isSyncing = useRef(false);
@@ -50,8 +53,87 @@ export default function BilingualReader({ chapter, onAnnotate, activeAnnotationI
   const paragraphsVi = chapter.contentVi.split('\n\n');
   const paragraphsEn = chapter.contentEn.split('\n\n');
 
+  const currentIndex = chapters.findIndex(c => c.id === chapter.id);
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex < chapters.length - 1;
+
+  const handlePrev = () => {
+    if (hasPrev) onChapterChange(chapters[currentIndex - 1].id);
+  };
+
+  const handleNext = () => {
+    if (hasNext) onChapterChange(chapters[currentIndex + 1].id);
+  };
+
   return (
-    <div className="flex h-full overflow-hidden pt-16">
+    <div className="flex flex-col h-full overflow-hidden pt-16">
+      {/* Chapter Navigation Bar */}
+      <div className="bg-surface-container border-b border-outline-variant px-4 py-3 flex items-center justify-between">
+        <button
+          onClick={handlePrev}
+          disabled={!hasPrev}
+          className={cn(
+            "flex items-center gap-1 px-3 py-1.5 rounded-md font-label text-sm transition-colors",
+            hasPrev ? "text-on-surface hover:bg-surface-container-high" : "text-outline/30 cursor-not-allowed"
+          )}
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Previous
+        </button>
+
+        <button
+          onClick={() => setShowChapterNav(!showChapterNav)}
+          className="flex items-center gap-2 px-4 py-2 bg-surface rounded-lg border border-outline-variant hover:border-primary/30 transition-colors"
+        >
+          <BookOpen className="w-4 h-4 text-primary" />
+          <span className="font-label text-sm text-on-surface">
+            {currentIndex + 1} of {chapters.length}: {chapter.title}
+          </span>
+        </button>
+
+        <button
+          onClick={handleNext}
+          disabled={!hasNext}
+          className={cn(
+            "flex items-center gap-1 px-3 py-1.5 rounded-md font-label text-sm transition-colors",
+            hasNext ? "text-on-surface hover:bg-surface-container-high" : "text-outline/30 cursor-not-allowed"
+          )}
+        >
+          Next
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Chapter Selector Dropdown */}
+      {showChapterNav && (
+        <div className="bg-surface-container border-b border-outline-variant px-4 py-3">
+          <div className="max-w-2xl mx-auto">
+            <p className="text-xs text-outline font-label mb-2">Jump to chapter:</p>
+            <div className="flex flex-wrap gap-2">
+              {chapters.map((c, idx) => (
+                <button
+                  key={c.id}
+                  onClick={() => {
+                    onChapterChange(c.id);
+                    setShowChapterNav(false);
+                  }}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md font-label text-sm transition-colors",
+                    c.id === chapter.id
+                      ? "bg-primary text-on-primary"
+                      : "bg-surface text-on-surface hover:bg-surface-container-high border border-outline-variant"
+                  )}
+                >
+                  {idx + 1}. {c.title}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Content Panes */}
+      <div className="flex flex-1 overflow-hidden">
       {/* Left Pane: Vietnamese */}
       <div 
         ref={leftRef}
