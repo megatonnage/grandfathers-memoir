@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Upload, MessageSquare, Settings, FileText, Image as ImageIcon, Users, BookOpen, Check, X } from 'lucide-react';
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Chapter, Annotation } from '../../types';
+import { Chapter, Annotation, GalleryImage } from '../../types';
 import { cn } from '../../lib/utils';
 import BilingualEditor from '../../components/BilingualEditor';
 import Gallery from '../../components/Gallery';
@@ -13,6 +13,7 @@ import AnnotationManager from '../../components/AnnotationManager';
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<'chapters' | 'gallery' | 'moderation' | 'annotations' | 'settings'>('chapters');
   const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -34,9 +35,15 @@ export default function AdminDashboard() {
       setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
+    const gq = query(collection(db, 'gallery'), orderBy('uploadedAt', 'desc'));
+    const unsubscribeGallery = onSnapshot(gq, (snapshot) => {
+      setGalleryImages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GalleryImage)));
+    });
+
     return () => {
       unsubscribeChapters();
       unsubscribeUsers();
+      unsubscribeGallery();
     };
   }, [selectedChapter?.id]);
 
@@ -79,15 +86,19 @@ export default function AdminDashboard() {
     }
   };
 
-  // Get all pending annotations with their context
+  // Get all pending annotations with their context (from chapters and gallery)
   const getPendingAnnotations = () => {
     const pending: Array<{
       annotation: Annotation;
       chapterId: string;
       chapterTitle: string;
       parentId?: string;
+      isGallery?: boolean;
+      galleryImageId?: string;
+      galleryImageCaption?: string;
     }> = [];
     
+    // Chapter annotations
     chapters.forEach(ch => {
       const findPending = (anns: Annotation[], parentId?: string) => {
         anns.forEach(a => {
@@ -107,13 +118,61 @@ export default function AdminDashboard() {
       if (ch.annotations) findPending(ch.annotations);
     });
     
+    // Gallery image annotations
+    galleryImages.forEach(img => {
+      if (img.annotations) {
+        img.annotations.forEach(a => {
+          if (a.status === 'pending') {
+            pending.push({
+              annotation: a,
+              chapterId: 'gallery',
+              chapterTitle: 'Gallery',
+              isGallery: true,
+              galleryImageId: img.id,
+              galleryImageCaption: img.caption
+            });
+          }
+        });
+      }
+    });
+    
     return pending;
   };
 
   const pendingAnnotations = getPendingAnnotations();
   const pendingCount = pendingAnnotations.length;
 
-  const handleModerate = async (chapterId: string, annotationId: string, action: 'approve' | 'reject', parentId?: string) => {
+  const handleModerate = async (
+    chapterId: string, 
+    annotationId: string, 
+    action: 'approve' | 'reject', 
+    parentId?: string,
+    isGallery?: boolean,
+    galleryImageId?: string
+  ) => {
+    // Handle gallery image annotations
+    if (isGallery && galleryImageId) {
+      const image = galleryImages.find(img => img.id === galleryImageId);
+      if (!image) return;
+
+      const newAnnotations = image.annotations?.filter(a => !(action === 'reject' && a.id === annotationId))
+        .map(a => {
+          if (a.id === annotationId && action === 'approve') {
+            return { ...a, status: 'approved' as const };
+          }
+          return a;
+        }) || [];
+
+      try {
+        await updateDoc(doc(db, 'gallery', galleryImageId), { annotations: newAnnotations });
+      } catch (e) {
+        console.error(e);
+        alert('Failed to update moderation status.');
+      }
+      return;
+    }
+
+    // Handle chapter annotations
     const chapter = chapters.find(c => c.id === chapterId);
     if (!chapter) return;
 
@@ -314,12 +373,15 @@ export default function AdminDashboard() {
                 <div className="space-y-4">
                   <p className="text-outline font-label mb-4">{pendingCount} pending annotation{pendingCount !== 1 ? 's' : ''}</p>
                   
-                  {pendingAnnotations.map(({ annotation, chapterId, chapterTitle, parentId }) => (
+                  {pendingAnnotations.map(({ annotation, chapterId, chapterTitle, parentId, isGallery, galleryImageId, galleryImageCaption }) => (
                     <div key={annotation.id} className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
                       <div className="flex items-start justify-between mb-4">
                         <div>
                           <p className="text-sm text-outline font-label mb-1">
                             On: <span className="text-on-surface font-medium">{chapterTitle}</span>
+                            {isGallery && galleryImageCaption && (
+                              <span className="text-primary"> • "{galleryImageCaption}"</span>
+                            )}
                             {parentId && <span className="text-tertiary"> (reply)</span>}
                           </p>
                           <p className="text-xs text-outline font-label">
@@ -342,14 +404,14 @@ export default function AdminDashboard() {
                       
                       <div className="flex items-center gap-3">
                         <button
-                          onClick={() => handleModerate(chapterId, annotation.id, 'approve', parentId)}
+                          onClick={() => handleModerate(chapterId, annotation.id, 'approve', parentId, isGallery, galleryImageId)}
                           className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md font-label text-sm hover:bg-green-700 transition-colors"
                         >
                           <Check className="w-4 h-4" />
                           Approve
                         </button>
                         <button
-                          onClick={() => handleModerate(chapterId, annotation.id, 'reject', parentId)}
+                          onClick={() => handleModerate(chapterId, annotation.id, 'reject', parentId, isGallery, galleryImageId)}
                           className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-md font-label text-sm hover:bg-red-200 transition-colors"
                         >
                           <X className="w-4 h-4" />
