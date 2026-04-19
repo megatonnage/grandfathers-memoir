@@ -10,7 +10,7 @@ import TimelineView from '../../components/TimelineView';
 import DistantVoices from '../../components/DistantVoices';
 import LandingPage from '../../components/LandingPage';
 import Gallery from '../../components/Gallery';
-import { Book, Users, Radio, History, Edit3, Image as ImageIcon, Layers, Heart } from 'lucide-react';
+import { Book, Users, Radio, History, Edit3, Image as ImageIcon, Layers } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Chapter, Annotation, GalleryImage } from '../../types';
 
@@ -276,15 +276,6 @@ export default function Home() {
           icon={<ImageIcon className="w-5 h-5" />}
           label="Gallery"
         />
-        <a 
-          href="/ba-ngoai"
-          className="flex flex-col items-center justify-center gap-1 px-4 py-1 transition-all duration-200 text-outline hover:text-[#E59368]"
-        >
-          <Heart className="w-5 h-5" />
-          <span className="font-label text-[10px] font-bold uppercase tracking-widest opacity-60">
-            Bà Ngoại
-          </span>
-        </a>
       </nav>
       )}
     </div>

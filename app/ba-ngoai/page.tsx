@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../../lib/firebase';
 import { GalleryImage, Annotation } from '../../types';
-import { MessageSquare, X, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
+import { MessageSquare, X, ChevronLeft, ChevronRight, Upload } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
@@ -13,6 +14,10 @@ export default function BaNgoaiPage() {
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
   const [annotationText, setAnnotationText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [newCaption, setNewCaption] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const q = query(collection(db, 'ba-ngoai-gallery'), orderBy('uploadedAt', 'desc'));
@@ -21,6 +26,52 @@ export default function BaNgoaiPage() {
     });
     return () => unsubscribe();
   }, []);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const fileRef = ref(storage, `ba-ngoai-gallery/${Date.now()}_${file.name}`);
+      const uploadTask = uploadBytesResumable(fileRef, file);
+
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(progress);
+        },
+        (error) => {
+          console.error('Upload failed:', error);
+          alert('Upload failed: ' + error.message);
+          setIsUploading(false);
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          
+          await addDoc(collection(db, 'ba-ngoai-gallery'), {
+            url: downloadURL,
+            caption: newCaption || file.name,
+            uploadedAt: new Date().toISOString(),
+            uploadedBy: 'Family Member',
+            annotations: []
+          });
+          
+          setNewCaption('');
+          setIsUploading(false);
+          setUploadProgress(0);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+      );
+    } catch (err) {
+      console.error(err);
+      alert('Upload failed: ' + (err as Error).message);
+      setIsUploading(false);
+    }
+  };
 
   const handleAddAnnotation = async () => {
     if (!selectedImage || !annotationText.trim()) return;
@@ -72,29 +123,53 @@ export default function BaNgoaiPage() {
         <div className="w-20"></div>
       </header>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-16 px-6 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
-        >
-          <Heart className="w-8 h-8 text-[#E59368] mx-auto mb-6" />
-          <h2 className="font-headline text-4xl md:text-6xl italic mb-4">
-            In Memory of
-          </h2>
-          <p className="font-body text-lg text-[#939694] max-w-2xl mx-auto leading-relaxed">
-            A gallery of memories, stories, and moments shared. 
-            Click any image to view and share your own memories.
-          </p>
-        </motion.div>
+      {/* Upload Section */}
+      <section className="pt-24 pb-8 px-6">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-[#1a1f1c] rounded-xl p-6 border border-[#939694]/20">
+            <h2 className="font-headline text-xl mb-4 text-[#E59368]">Share a Photo</h2>
+            
+            <div className="flex flex-col sm:flex-row gap-4">
+              <input
+                type="text"
+                placeholder="Caption (optional)"
+                value={newCaption}
+                onChange={(e) => setNewCaption(e.target.value)}
+                className="flex-1 px-4 py-3 bg-[#0B0E0C] border border-[#939694]/20 rounded-lg text-[#F1F3F2] placeholder:text-[#939694]/50"
+              />
+              
+              <div className="flex flex-col gap-2">
+                {isUploading && (
+                  <div className="w-full h-2 bg-[#0B0E0C] rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-[#E59368] transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                )}
+                <label className="flex items-center justify-center gap-2 px-6 py-3 bg-[#E59368] text-[#0B0E0C] rounded-lg font-label font-bold cursor-pointer hover:bg-[#E59368]/90 transition-colors">
+                  <Upload className="w-4 h-4" />
+                  {isUploading ? `${Math.round(uploadProgress)}%` : 'Upload Photo'}
+                  <input 
+                    ref={fileInputRef}
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    onChange={handleImageUpload}
+                    disabled={isUploading}
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Image Grid */}
       <section className="px-6 pb-20 max-w-7xl mx-auto">
         {images.length === 0 ? (
           <div className="text-center py-20 text-[#939694]">
-            <p className="font-label">No images yet. Images will appear here once added.</p>
+            <p className="font-label">No images yet. Be the first to share a photo!</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
