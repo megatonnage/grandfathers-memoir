@@ -44,6 +44,7 @@ export default function GalleryView({ images }: GalleryViewProps) {
         // Add to firestore
         const newImage: Omit<GalleryImage, 'id'> = {
           url: downloadURL,
+          caption: file.name,
           uploadedBy: 'Family Member',
           uploadedAt: new Date().toISOString(),
           annotations: []
