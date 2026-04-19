@@ -9,11 +9,12 @@ import ChorusSidebar from '../../components/ChorusSidebar';
 import TimelineView from '../../components/TimelineView';
 import DistantVoices from '../../components/DistantVoices';
 import LandingPage from '../../components/LandingPage';
-import { Book, Users, Radio, History, Edit3 } from 'lucide-react';
+import Gallery from '../../components/Gallery';
+import { Book, Users, Radio, History, Edit3, Image as ImageIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Chapter, Annotation, GalleryImage } from '../../types';
 
-type View = 'landing' | 'memoir' | 'chorus' | 'voices' | 'timeline';
+type View = 'landing' | 'memoir' | 'chorus' | 'voices' | 'timeline' | 'gallery';
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<View>('memoir');
@@ -187,6 +188,9 @@ export default function Home() {
             }
           }} />
         )}
+        {currentView === 'gallery' && (
+          <Gallery />
+        )}
         
         {/* Floating Action Button for Annotations */}
         {currentView === 'memoir' && (
@@ -251,6 +255,12 @@ export default function Home() {
           onClick={() => setCurrentView('timeline')}
           icon={<History className="w-5 h-5" />}
           label="Timeline"
+        />
+        <NavButton 
+          active={currentView === 'gallery'} 
+          onClick={() => setCurrentView('gallery')}
+          icon={<ImageIcon className="w-5 h-5" />}
+          label="Gallery"
         />
       </nav>
       )}
