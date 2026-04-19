@@ -29,4 +29,3 @@ Chapters live in `chapters/` with five layer files each:
 ## Deployment
 
 Built for static export. Configure `output: 'export'` in `next.config.js` for deployment to any static host.
-
