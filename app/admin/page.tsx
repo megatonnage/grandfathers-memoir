@@ -356,9 +356,8 @@ export default function AdminDashboard() {
                     {chapters.map((chapter, index) => (
                       <div key={chapter.id} className="group">
                         <div className="flex items-start gap-3">
-                          <button
-                            onClick={() => setSelectedChapter(chapter)}
-                            className="flex-1 text-left p-4 bg-white rounded-xl border border-outline-variant hover:border-primary/30 hover:shadow-sm transition-all"
+                          <div
+                            className="flex-1 p-4 bg-white rounded-xl border border-outline-variant hover:border-primary/30 hover:shadow-sm transition-all"
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex-1">
@@ -379,7 +378,13 @@ export default function AdminDashboard() {
                                 )}
                               </div>
                             </div>
-                          </button>
+                            <button
+                              onClick={() => setSelectedChapter(chapter)}
+                              className="mt-3 text-sm font-label text-primary hover:underline"
+                            >
+                              Edit chapter →
+                            </button>
+                          </div>
                           <button
                             onClick={() => handleDeleteChapter(chapter.id)}
                             className="p-3 text-outline hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
