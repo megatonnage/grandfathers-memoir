@@ -22,6 +22,7 @@ export interface Chapter {
   imageCaption?: string;
   annotations: Annotation[];
   timestamp?: string;
+  order?: number;
 }
 
 export interface GalleryImage {
