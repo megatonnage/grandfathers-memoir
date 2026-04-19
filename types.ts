@@ -28,8 +28,8 @@ export interface GalleryImage {
   id: string;
   url: string;
   caption: string;
-  uploadedBy: string;
   uploadedAt: string;
+  uploadedBy: string;
   historicalDate?: string;
   annotations: Annotation[];
 }
