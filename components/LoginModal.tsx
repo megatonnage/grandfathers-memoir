@@ -188,7 +188,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                           type="password"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          required={mode !== 'reset'}
+                          required
                           minLength={6}
                           className="w-full pl-10 pr-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-on-surface focus:outline-none focus:border-primary"
                           placeholder="••••••••"
