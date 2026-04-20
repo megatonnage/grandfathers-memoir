@@ -1,19 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
 
-// Initialize Firebase Admin if not already initialized
-if (!getApps().length) {
-  initializeApp({
-    credential: cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  });
+// Dynamic import to avoid build-time initialization
+async function getFirestore() {
+  const { initializeApp, getApps, cert } = await import('firebase-admin/app');
+  const { getFirestore } = await import('firebase-admin/firestore');
+
+  if (!getApps().length) {
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
+    if (!projectId || !clientEmail || !privateKey) {
+      throw new Error('Firebase Admin credentials not configured');
+    }
+
+    initializeApp({
+      credential: cert({
+        projectId,
+        clientEmail,
+        privateKey,
+      }),
+    });
+  }
+
+  return getFirestore();
 }
-
-const db = getFirestore();
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,6 +34,8 @@ export async function POST(request: NextRequest) {
     if (secret !== process.env.ADMIN_SETUP_SECRET) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const db = await getFirestore();
 
     // Check if user already exists
     const existingUser = await db.collection('users').doc(uid).get();
