@@ -115,7 +115,7 @@ export default function BaNgoaiPage() {
   };
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface">
+    <div className="min-h-screen bg-surface text-on-surface pb-24">
       {/* Silt & Stone Logo - Upper Left */}
       <a 
         href="/" 

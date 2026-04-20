@@ -172,7 +172,7 @@ export default function Home() {
         </span>
       </a>
 
-      <main className="flex-1 relative overflow-hidden">
+      <main className="flex-1 relative overflow-hidden pb-24">
         {!currentChapter ? (
           <div className="w-full h-full flex flex-col items-center justify-center pt-32 text-on-surface-variant animate-pulse">
             <p className="font-title text-xl">Dusting off the archive...</p>
