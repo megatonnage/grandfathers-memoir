@@ -10,6 +10,8 @@ import { cn } from '../lib/utils';
 import { Upload, X, MessageSquare, Trash2, ChevronLeft, ChevronRight, Copy, Check, Heart as HeartIcon } from 'lucide-react';
 import LoginModal from './LoginModal';
 
+const HEART_COLOR = '#FFCD00';
+
 interface GalleryProps {
   onImageClick?: (image: GalleryImage) => void;
   isAdmin?: boolean;
@@ -225,7 +227,7 @@ export default function Gallery({ onImageClick, isAdmin = false }: GalleryProps)
               {/* Heart icon for images with annotations */}
               {image.annotations && image.annotations.length > 0 && (
                 <div className="absolute top-2 right-2 p-1.5 bg-surface/80 backdrop-blur-sm rounded-full">
-                  <HeartIcon className="w-4 h-4 text-primary fill-primary" />
+                  <HeartIcon className="w-4 h-4" style={{ fill: HEART_COLOR, color: HEART_COLOR }} />
                 </div>
               )}
             </div>

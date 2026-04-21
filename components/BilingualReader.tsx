@@ -4,6 +4,8 @@ import { Chapter } from '../types';
 import { cn } from '../lib/utils';
 import { MessageSquarePlus, ChevronLeft, ChevronRight, BookOpen, Heart } from 'lucide-react';
 
+const HEART_COLOR = '#FFCD00';
+
 interface BilingualReaderProps {
   chapter: Chapter;
   chapters: Chapter[];
@@ -170,8 +172,8 @@ export default function BilingualReader({ chapter, chapters, onAnnotate, onChapt
                     <ReactMarkdown components={markdownComponents}>{p.replace(/\n/g, '  \n')}</ReactMarkdown>
                   </div>
                       {hasAnnotation && (
-                    <div className="absolute -right-4 top-2 p-1 text-primary" title="This paragraph has annotations">
-                      <Heart className="w-4 h-4 fill-primary" />
+                    <div className="absolute -right-4 top-2 p-1" title="This paragraph has annotations">
+                      <Heart className="w-4 h-4" style={{ fill: HEART_COLOR, color: HEART_COLOR }} />
                     </div>
                   )}
                   <button 
@@ -240,8 +242,8 @@ export default function BilingualReader({ chapter, chapters, onAnnotate, onChapt
                     <ReactMarkdown components={markdownComponents}>{p.replace(/\n/g, '  \n')}</ReactMarkdown>
                   </div>
                   {hasAnnotation && (
-                    <div className="absolute -right-4 top-2 p-1 text-primary" title="This paragraph has annotations">
-                      <Heart className="w-4 h-4 fill-primary" />
+                    <div className="absolute -right-4 top-2 p-1" title="This paragraph has annotations">
+                      <Heart className="w-4 h-4" style={{ fill: HEART_COLOR, color: HEART_COLOR }} />
                     </div>
                   )}
                   <button 
