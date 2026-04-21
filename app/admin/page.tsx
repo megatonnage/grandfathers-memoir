@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useState as useStateLocal } from 'react';
-import { Upload, MessageSquare, Settings, FileText, Image as ImageIcon, Users, BookOpen, Check, X, Heart, Trash2, Radio, History, Layers, Edit3, LogOut, User, Mail } from 'lucide-react';
+import { Upload, MessageSquare, Settings, FileText, Image as ImageIcon, Users, BookOpen, Check, X, Heart, Trash2, Radio, History, Layers, Edit3, LogOut, User } from 'lucide-react';
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../lib/AuthContext';
@@ -12,13 +12,13 @@ import BilingualEditor from '../../components/BilingualEditor';
 import Gallery from '../../components/Gallery';
 import AnnotationManager from '../../components/AnnotationManager';
 import LoginModal from '../../components/LoginModal';
-import InviteManager from '../../components/InviteManager';
+
 import ProtectedRoute from '../../components/ProtectedRoute';
 
 export default function AdminDashboard() {
   const { currentUser, userProfile, isAuthenticated, isAdmin, logout } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chapters' | 'gallery' | 'moderation' | 'annotations' | 'ba-ngoai' | 'experiences' | 'invites' | 'settings'>('chapters');
+  const [activeTab, setActiveTab] = useState<'chapters' | 'gallery' | 'moderation' | 'annotations' | 'ba-ngoai' | 'experiences' | 'settings'>('chapters');
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [baNgoaiImages, setBaNgoaiImages] = useState<GalleryImage[]>([]);
@@ -337,14 +337,7 @@ export default function AdminDashboard() {
             icon={<Layers className="w-5 h-5" />}
             label="Experiences"
           />
-          {isAdmin && (
-            <TabButton 
-              active={activeTab === 'invites'} 
-              onClick={() => { setActiveTab('invites'); setSelectedChapter(null); }}
-              icon={<Mail className="w-5 h-5" />}
-              label="Invites"
-            />
-          )}
+
           <TabButton 
             active={activeTab === 'settings'} 
             onClick={() => { setActiveTab('settings'); setSelectedChapter(null); }}
@@ -723,14 +716,7 @@ export default function AdminDashboard() {
           <ExperiencesAdmin chapters={chapters} galleryImages={galleryImages} />
         )}
 
-        {activeTab === 'invites' && isAdmin && currentUser && (
-          <div className="p-8 overflow-y-auto h-full">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl font-headline text-on-surface mb-8">Manage Invitations</h2>
-              <InviteManager currentUserId={currentUser.uid} />
-            </div>
-          </div>
-        )}
+
 
         {activeTab === 'settings' && (
           <div className="p-8 overflow-y-auto h-full">
