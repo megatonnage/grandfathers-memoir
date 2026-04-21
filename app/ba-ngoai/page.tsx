@@ -24,6 +24,7 @@ export default function BaNgoaiPage() {
   const [newCaption, setNewCaption] = useState('');
   const [isChorusOpen, setIsChorusOpen] = useState(false);
   const [chorusAnnotation, setChorusAnnotation] = useState('');
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -35,16 +36,26 @@ export default function BaNgoaiPage() {
   }, []);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
     if (!isAuthenticated) {
+      setPendingFile(file);
       setShowLoginModal(true);
       return;
     }
-    const file = e.target.files?.[0];
-    if (!file) return;
+    
+    await processUpload(file);
+  };
+
+  const processUpload = async (file: File) => {
 
     setIsUploading(true);
     setUploadProgress(0);
 
+    setIsUploading(true);
+    setUploadProgress(0);
+    
     try {
       const fileRef = ref(storage, `ba-ngoai-gallery/${Date.now()}_${file.name}`);
       const uploadTask = uploadBytesResumable(fileRef, file);
@@ -74,6 +85,7 @@ export default function BaNgoaiPage() {
           setNewCaption('');
           setIsUploading(false);
           setUploadProgress(0);
+          setPendingFile(null);
           if (fileInputRef.current) fileInputRef.current.value = '';
         }
       );
@@ -83,6 +95,13 @@ export default function BaNgoaiPage() {
       setIsUploading(false);
     }
   };
+
+  // Process pending file after login
+  useEffect(() => {
+    if (isAuthenticated && pendingFile) {
+      processUpload(pendingFile);
+    }
+  }, [isAuthenticated, pendingFile]);
 
   const handleAddAnnotation = async () => {
     if (!isAuthenticated) {

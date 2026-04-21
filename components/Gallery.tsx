@@ -79,6 +79,7 @@ export default function Gallery({ onImageClick, isAdmin = false }: GalleryProps)
           setNewCaption('');
           setIsUploading(false);
           setUploadProgress(0);
+          setPendingFile(null);
         }
       );
     } catch (err) {
@@ -87,6 +88,13 @@ export default function Gallery({ onImageClick, isAdmin = false }: GalleryProps)
       setIsUploading(false);
     }
   };
+
+  // Process pending file after login
+  useEffect(() => {
+    if (isAuthenticated && pendingFile) {
+      processUpload(pendingFile);
+    }
+  }, [isAuthenticated, pendingFile]);
 
   const copyMarkdown = (image: GalleryImage) => {
     const markdown = `![${image.caption}](${image.url})`;
