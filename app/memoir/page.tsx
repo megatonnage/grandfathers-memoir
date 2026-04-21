@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { useAuth } from '../../lib/AuthContext';
 // Header removed - using Silt & Stone logo instead
 import BilingualReader from '../../components/BilingualReader';
 import ChorusSidebar from '../../components/ChorusSidebar';
@@ -11,6 +12,7 @@ import TimelineView from '../../components/TimelineView';
 import DistantVoices from '../../components/DistantVoices';
 import LandingPage from '../../components/LandingPage';
 import Gallery from '../../components/Gallery';
+import LoginModal from '../../components/LoginModal';
 import { Book, Users, Radio, History, Edit3, Image as ImageIcon, Layers, Heart } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Chapter, Annotation, GalleryImage } from '../../types';
@@ -18,6 +20,8 @@ import { Chapter, Annotation, GalleryImage } from '../../types';
 type View = 'landing' | 'memoir' | 'chorus' | 'voices' | 'timeline' | 'gallery';
 
 export default function Home() {
+  const { isAuthenticated } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const searchParams = useSearchParams();
   const [currentView, setCurrentView] = useState<View>('memoir');
   const [isChorusOpen, setIsChorusOpen] = useState(false);
@@ -65,11 +69,19 @@ export default function Home() {
   const currentChapter = chapters[currentChapterIndex];
 
   const handleAnnotate = (targetId?: string | null) => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
     setActiveTargetId(targetId || null);
     setIsChorusOpen(true);
   };
 
   const handleAddAnnotation = async (content: string, targetId?: string | null) => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
     if (!content) {
       // Hack to clear filter from sidebar
       setActiveTargetId(null);
@@ -102,6 +114,10 @@ export default function Home() {
   };
 
   const handleAddReply = async (annotationId: string, content: string) => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
     const newReply: Annotation = {
       id: Math.random().toString(36).substr(2, 9),
       author: 'Family Member',
@@ -253,6 +269,12 @@ export default function Home() {
           </>
         )}
       </main>
+
+      {/* Login Modal */}
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)} 
+      />
 
       {/* Bottom Navigation */}
       {currentView !== 'landing' && (

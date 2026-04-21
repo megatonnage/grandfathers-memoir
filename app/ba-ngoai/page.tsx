@@ -77,6 +77,10 @@ export default function BaNgoaiPage() {
   };
 
   const handleAddAnnotation = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
     if (!selectedImage || !annotationText.trim()) return;
 
     setIsSubmitting(true);
@@ -378,6 +382,10 @@ export default function BaNgoaiPage() {
               />
               <button
                 onClick={async () => {
+                  if (!isAuthenticated) {
+                    setShowLoginModal(true);
+                    return;
+                  }
                   if (!chorusAnnotation.trim()) return;
                   // Add to a general chorus collection or first image
                   alert('Memory shared! It will appear once approved.');
@@ -393,6 +401,12 @@ export default function BaNgoaiPage() {
           </motion.aside>
         </>
       )}
+
+      {/* Login Modal */}
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)} 
+      />
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-8 bg-surface/95 backdrop-blur-md border-t border-outline-variant">
