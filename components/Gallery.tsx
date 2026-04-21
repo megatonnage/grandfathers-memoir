@@ -37,14 +37,7 @@ export default function Gallery({ onImageClick, isAdmin = false }: GalleryProps)
   const [uploadProgress, setUploadProgress] = useState(0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isAuthenticated) {
-      setShowLoginModal(true);
-      return;
-    }
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processUpload = async (file: File) => {
     setIsUploading(true);
     setUploadProgress(0);
     
@@ -88,6 +81,19 @@ export default function Gallery({ onImageClick, isAdmin = false }: GalleryProps)
       alert('Upload request failed: ' + (err as Error).message);
       setIsUploading(false);
     }
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (!isAuthenticated) {
+      setPendingFile(file);
+      setShowLoginModal(true);
+      return;
+    }
+    
+    await processUpload(file);
   };
 
   // Process pending file after login
