@@ -4,13 +4,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../lib/firebase';
+import { useAuth } from '../../lib/AuthContext';
 import { GalleryImage, Annotation } from '../../types';
+import LoginModal from '../../components/LoginModal';
 import { MessageSquare, X, ChevronLeft, ChevronRight, Upload, Layers, Book, Users, Radio, History, Image as ImageIcon, Heart, Send } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { cn } from '../../lib/utils';
 
 export default function BaNgoaiPage() {
+  const { isAuthenticated } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
   const [annotationText, setAnnotationText] = useState('');
