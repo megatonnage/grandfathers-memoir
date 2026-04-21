@@ -18,6 +18,7 @@ interface GalleryProps {
 export default function Gallery({ onImageClick, isAdmin = false }: GalleryProps) {
   const { isAuthenticated } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
   const [isUploading, setIsUploading] = useState(false);
