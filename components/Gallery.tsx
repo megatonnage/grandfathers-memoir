@@ -4,9 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, orderBy, onSnapshot, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../lib/firebase';
+import { useAuth } from '../lib/AuthContext';
 import { GalleryImage, Annotation } from '../types';
 import { cn } from '../lib/utils';
 import { Upload, X, MessageSquare, Trash2, ChevronLeft, ChevronRight, Copy, Check } from 'lucide-react';
+import LoginModal from './LoginModal';
 
 interface GalleryProps {
   onImageClick?: (image: GalleryImage) => void;
@@ -14,6 +16,8 @@ interface GalleryProps {
 }
 
 export default function Gallery({ onImageClick, isAdmin = false }: GalleryProps) {
+  const { isAuthenticated } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -33,6 +37,10 @@ export default function Gallery({ onImageClick, isAdmin = false }: GalleryProps)
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -99,6 +107,10 @@ export default function Gallery({ onImageClick, isAdmin = false }: GalleryProps)
   };
 
   const handleAddAnnotation = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
     if (!selectedImage || !annotationText.trim()) return;
 
     const newAnnotation: Annotation = {
@@ -339,6 +351,12 @@ export default function Gallery({ onImageClick, isAdmin = false }: GalleryProps)
           </div>
         </div>
       )}
+
+      {/* Login Modal */}
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)} 
+      />
     </div>
   );
 }

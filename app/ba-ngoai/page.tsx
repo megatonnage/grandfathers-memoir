@@ -35,6 +35,10 @@ export default function BaNgoaiPage() {
   }, []);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
     const file = e.target.files?.[0];
     if (!file) return;
 
