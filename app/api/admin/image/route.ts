@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import { adminStorage } from '../../../../lib/firebase-admin';
 
 export async function POST(request: Request) {
   try {
+    // Dynamic import to avoid build-time initialization
+    const { adminStorage } = await import('../../../../lib/firebase-admin');
+    
     const data = await request.formData();
     const file: File | null = data.get('file') as unknown as File;
 
