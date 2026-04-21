@@ -7,7 +7,7 @@ import { db, storage } from '../lib/firebase';
 import { useAuth } from '../lib/AuthContext';
 import { GalleryImage, Annotation } from '../types';
 import { cn } from '../lib/utils';
-import { Upload, X, MessageSquare, Trash2, ChevronLeft, ChevronRight, Copy, Check } from 'lucide-react';
+import { Upload, X, MessageSquare, Trash2, ChevronLeft, ChevronRight, Copy, Check, Heart as HeartIcon } from 'lucide-react';
 import LoginModal from './LoginModal';
 
 interface GalleryProps {
@@ -216,12 +216,18 @@ export default function Gallery({ onImageClick, isAdmin = false }: GalleryProps)
             className="group relative bg-white rounded-lg overflow-hidden shadow-sm border border-outline-variant cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => onImageClick ? onImageClick(image) : setSelectedImage(image)}
           >
-            <div className="aspect-square overflow-hidden">
+            <div className="aspect-square overflow-hidden relative">
               <img 
                 src={image.url} 
                 alt={image.caption}
                 className="w-full h-full object-cover grayscale-[0.2] sepia-[0.1] group-hover:grayscale-0 transition-all"
               />
+              {/* Heart icon for images with annotations */}
+              {image.annotations && image.annotations.length > 0 && (
+                <div className="absolute top-2 right-2 p-1.5 bg-surface/80 backdrop-blur-sm rounded-full">
+                  <HeartIcon className="w-4 h-4 text-primary fill-primary" />
+                </div>
+              )}
             </div>
             <div className="p-3">
               <p className="text-sm font-label text-on-surface truncate">{image.caption}</p>

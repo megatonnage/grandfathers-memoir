@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Chapter } from '../types';
 import { cn } from '../lib/utils';
-import { MessageSquarePlus, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
+import { MessageSquarePlus, ChevronLeft, ChevronRight, BookOpen, Heart } from 'lucide-react';
 
 interface BilingualReaderProps {
   chapter: Chapter;
@@ -169,9 +169,14 @@ export default function BilingualReader({ chapter, chapters, onAnnotate, onChapt
                   <div className="prose prose-stone max-w-none font-headline text-xl leading-relaxed text-on-surface/90">
                     <ReactMarkdown components={markdownComponents}>{p.replace(/\n/g, '  \n')}</ReactMarkdown>
                   </div>
+                      {hasAnnotation && (
+                    <div className="absolute -right-4 top-2 p-1 text-primary" title="This paragraph has annotations">
+                      <Heart className="w-4 h-4 fill-primary" />
+                    </div>
+                  )}
                   <button 
                     onClick={() => onAnnotate(pId)}
-                    className="absolute -right-4 top-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-primary text-on-primary rounded-sm shadow-lg hover:scale-110"
+                    className="absolute -right-4 top-8 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-primary text-on-primary rounded-sm shadow-lg hover:scale-110"
                     title="Annotate this paragraph"
                   >
                     <MessageSquarePlus className="w-4 h-4" />
@@ -234,9 +239,14 @@ export default function BilingualReader({ chapter, chapters, onAnnotate, onChapt
                   <div className="prose prose-stone max-w-none font-sans text-[17px] leading-relaxed text-on-surface/75">
                     <ReactMarkdown components={markdownComponents}>{p.replace(/\n/g, '  \n')}</ReactMarkdown>
                   </div>
+                  {hasAnnotation && (
+                    <div className="absolute -right-4 top-2 p-1 text-primary" title="This paragraph has annotations">
+                      <Heart className="w-4 h-4 fill-primary" />
+                    </div>
+                  )}
                   <button 
                     onClick={() => onAnnotate(pId)}
-                    className="absolute -right-4 top-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-primary text-on-primary rounded-sm shadow-lg hover:scale-110"
+                    className="absolute -right-4 top-8 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-primary text-on-primary rounded-sm shadow-lg hover:scale-110"
                     title="Annotate this translation"
                   >
                     <MessageSquarePlus className="w-4 h-4" />

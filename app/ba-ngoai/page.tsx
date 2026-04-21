@@ -7,7 +7,7 @@ import { db, storage } from '../../lib/firebase';
 import { useAuth } from '../../lib/AuthContext';
 import { GalleryImage, Annotation } from '../../types';
 import LoginModal from '../../components/LoginModal';
-import { MessageSquare, X, ChevronLeft, ChevronRight, Upload, Layers, Book, Users, Radio, History, Image as ImageIcon, Heart, Send } from 'lucide-react';
+import { MessageSquare, X, ChevronLeft, ChevronRight, Upload, Layers, Book, Users, Radio, History, Image as ImageIcon, Heart, Send, Heart as HeartIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { cn } from '../../lib/utils';
@@ -239,6 +239,12 @@ export default function BaNgoaiPage() {
                   alt={image.caption}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
+                {/* Heart icon for images with annotations */}
+                {image.annotations && image.annotations.filter(a => a.status === 'approved').length > 0 && (
+                  <div className="absolute top-2 right-2 p-1.5 bg-surface/80 backdrop-blur-sm rounded-full">
+                    <HeartIcon className="w-4 h-4 text-primary fill-primary" />
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-surface/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <div className="absolute bottom-0 left-0 right-0 p-4">
                     <p className="font-label text-sm text-on-surface truncate">{image.caption}</p>
