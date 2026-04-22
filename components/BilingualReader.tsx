@@ -68,9 +68,9 @@ export default function BilingualReader({ chapter, chapters, onAnnotate, onChapt
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden pt-16">
-      {/* Chapter Navigation Bar */}
-      <div className="bg-surface-container border-b border-outline-variant px-4 py-3 flex items-center justify-between">
+    <div className="flex flex-col h-full pt-16">
+      {/* Chapter Navigation Bar - Fixed */}
+      <div className="fixed top-16 left-0 right-0 z-40 bg-surface/95 backdrop-blur-md border-b border-outline-variant px-4 py-3 flex items-center justify-between shadow-sm">
         <button
           onClick={handlePrev}
           disabled={!hasPrev}
@@ -106,9 +106,9 @@ export default function BilingualReader({ chapter, chapters, onAnnotate, onChapt
         </button>
       </div>
 
-      {/* Chapter Selector Dropdown */}
+      {/* Chapter Selector Dropdown - Fixed below nav */}
       {showChapterNav && (
-        <div className="bg-surface-container border-b border-outline-variant px-4 py-3">
+        <div className="fixed top-[116px] left-0 right-0 z-40 bg-surface/95 backdrop-blur-md border-b border-outline-variant px-4 py-3 shadow-sm">
           <div className="max-w-2xl mx-auto">
             <p className="text-xs text-outline font-label mb-2">Jump to chapter:</p>
             <div className="flex flex-wrap gap-2">
@@ -134,8 +134,8 @@ export default function BilingualReader({ chapter, chapters, onAnnotate, onChapt
         </div>
       )}
 
-      {/* Content Panes */}
-      <div className="flex flex-1 overflow-hidden">
+      {/* Content Panes - Add top padding to account for fixed nav */}
+      <div className="flex flex-1 overflow-hidden pt-[60px]">
       {/* Left Pane: Vietnamese */}
       <div 
         ref={leftRef}
