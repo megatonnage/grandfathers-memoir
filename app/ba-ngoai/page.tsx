@@ -68,9 +68,16 @@ export default function BaNgoaiPage() {
           const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
           setUploadProgress(progress);
         },
-        (error) => {
+        (error: any) => {
           console.error('Upload failed:', error);
-          alert('Upload failed: ' + error.message);
+          // Check if it's a permission error - show login modal instead
+          if (error.code === 'storage/unauthorized' || error.message?.includes('permission')) {
+            setPendingFile(file);
+            setShowLoginModal(true);
+            alert('Please sign in to upload images.');
+          } else {
+            alert('Upload failed: ' + error.message);
+          }
           setIsUploading(false);
         },
         async () => {
@@ -91,9 +98,16 @@ export default function BaNgoaiPage() {
           if (fileInputRef.current) fileInputRef.current.value = '';
         }
       );
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Upload failed: ' + (err as Error).message);
+      // Check if it's a permission error - show login modal instead
+      if (err.code === 'storage/unauthorized' || err.message?.includes('permission')) {
+        setPendingFile(file);
+        setShowLoginModal(true);
+        alert('Please sign in to upload images.');
+      } else {
+        alert('Upload failed: ' + err.message);
+      }
       setIsUploading(false);
     }
   };
