@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Helper function to check if user is moderator or admin
+    function isModerator() {
+      return request.auth != null && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'moderator');
+    }
+
+    // Public readable collections
+    match /chapters/{chapter} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /gallery/{image} {
+      allow read: if true;
+      allow write: if isAdmin() || isModerator();
+    }
+
+    match /ba-ngoai-gallery/{image} {
+      allow read: if true;
+      allow write: if isAdmin() || isModerator();
+    }
+
+    // Users and invites
+    match /users/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+      allow update: if request.auth != null && request.auth.uid == userId; // Allow users to update their last login
+    }
+    
+    match /invites/{email} {
+      allow read, write: if isAdmin();
+    }
+  }
+}
